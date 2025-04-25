@@ -1,5 +1,7 @@
 // API Constants
-export const API_URL = 'http://localhost:8000';
+export const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000'
+  : `https://${window.location.hostname}:8000`;
 
 // Storage Keys (used in addition to those defined in storage.js)
 export const STORAGE_KEYS = {

@@ -4,20 +4,25 @@ import { API_URL } from '../utils/constants';
 /**
  * Send power command to a TV
  * @param {string} deviceId - ID of the target device
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} Success status
  */
 export const sendPowerCommand = async (deviceId) => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're just simulating a successful response
+    const response = await axios.post(`${API_URL}/api/control/power`, {
+      deviceId
+    });
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    console.log(`Power command sent to device ${deviceId}`);
-    return true;
+    if (response.data.status === 'success') {
+      console.log(`Power command sent to device ${deviceId}`);
+      return true;
+    } else {
+      throw new Error(response.data.message || 'Failed to send power command');
+    }
   } catch (error) {
     console.error('Error sending power command:', error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || 'Failed to send power command');
+    }
     throw new Error('Failed to send power command');
   }
 };
@@ -26,20 +31,26 @@ export const sendPowerCommand = async (deviceId) => {
  * Send volume command to a TV
  * @param {string} deviceId - ID of the target device
  * @param {string} action - 'up', 'down', or 'mute'
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} Success status
  */
 export const sendVolumeCommand = async (deviceId, action) => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're just simulating a successful response
+    const response = await axios.post(`${API_URL}/api/control/volume`, {
+      deviceId,
+      action
+    });
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log(`Volume ${action} command sent to device ${deviceId}`);
-    return true;
+    if (response.data.status === 'success') {
+      console.log(`Volume ${action} command sent to device ${deviceId}`);
+      return true;
+    } else {
+      throw new Error(response.data.message || `Failed to send volume ${action} command`);
+    }
   } catch (error) {
     console.error(`Error sending volume ${action} command:`, error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || `Failed to send volume ${action} command`);
+    }
     throw new Error(`Failed to send volume ${action} command`);
   }
 };
@@ -49,25 +60,33 @@ export const sendVolumeCommand = async (deviceId, action) => {
  * @param {string} deviceId - ID of the target device
  * @param {string} action - 'up', 'down', 'guide', or 'number'
  * @param {string} [number] - Channel number (only for 'number' action)
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} Success status
  */
 export const sendChannelCommand = async (deviceId, action, number) => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're just simulating a successful response
+    const payload = { deviceId, action };
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    if (action === 'number') {
-      console.log(`Channel number ${number} command sent to device ${deviceId}`);
-    } else {
-      console.log(`Channel ${action} command sent to device ${deviceId}`);
+    if (action === 'number' && number) {
+      payload.number = number;
     }
     
-    return true;
+    const response = await axios.post(`${API_URL}/api/control/channel`, payload);
+    
+    if (response.data.status === 'success') {
+      if (action === 'number') {
+        console.log(`Channel number ${number} command sent to device ${deviceId}`);
+      } else {
+        console.log(`Channel ${action} command sent to device ${deviceId}`);
+      }
+      return true;
+    } else {
+      throw new Error(response.data.message || `Failed to send channel ${action} command`);
+    }
   } catch (error) {
     console.error(`Error sending channel ${action} command:`, error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || `Failed to send channel ${action} command`);
+    }
     throw new Error(`Failed to send channel ${action} command`);
   }
 };
@@ -76,20 +95,26 @@ export const sendChannelCommand = async (deviceId, action, number) => {
  * Send directional pad command to a TV
  * @param {string} deviceId - ID of the target device
  * @param {string} direction - 'up', 'down', 'left', 'right', or 'ok'
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} Success status
  */
 export const sendDirectionalCommand = async (deviceId, direction) => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're just simulating a successful response
+    const response = await axios.post(`${API_URL}/api/control/directional`, {
+      deviceId,
+      direction
+    });
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    console.log(`Direction ${direction} command sent to device ${deviceId}`);
-    return true;
+    if (response.data.status === 'success') {
+      console.log(`Direction ${direction} command sent to device ${deviceId}`);
+      return true;
+    } else {
+      throw new Error(response.data.message || `Failed to send direction ${direction} command`);
+    }
   } catch (error) {
     console.error(`Error sending direction ${direction} command:`, error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || `Failed to send direction ${direction} command`);
+    }
     throw new Error(`Failed to send direction ${direction} command`);
   }
 };
@@ -98,20 +123,26 @@ export const sendDirectionalCommand = async (deviceId, direction) => {
  * Send text input to a TV
  * @param {string} deviceId - ID of the target device
  * @param {string} text - Text to send
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} Success status
  */
 export const sendInputTextCommand = async (deviceId, text) => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're just simulating a successful response
+    const response = await axios.post(`${API_URL}/api/control/text`, {
+      deviceId,
+      text
+    });
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    console.log(`Text input "${text}" sent to device ${deviceId}`);
-    return true;
+    if (response.data.status === 'success') {
+      console.log(`Text input "${text}" sent to device ${deviceId}`);
+      return true;
+    } else {
+      throw new Error(response.data.message || 'Failed to send text input');
+    }
   } catch (error) {
     console.error('Error sending text input:', error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || 'Failed to send text input');
+    }
     throw new Error('Failed to send text input');
   }
 };
@@ -120,20 +151,26 @@ export const sendInputTextCommand = async (deviceId, text) => {
  * Send voice command to a TV
  * @param {string} deviceId - ID of the target device
  * @param {string} command - Voice command text
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} Success status
  */
 export const sendVoiceCommand = async (deviceId, command) => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're just simulating a successful response
+    const response = await axios.post(`${API_URL}/api/control/voice`, {
+      deviceId,
+      command
+    });
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    console.log(`Voice command "${command}" sent to device ${deviceId}`);
-    return true;
+    if (response.data.status === 'success') {
+      console.log(`Voice command "${command}" sent to device ${deviceId}`);
+      return true;
+    } else {
+      throw new Error(response.data.message || 'Failed to send voice command');
+    }
   } catch (error) {
     console.error('Error sending voice command:', error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || 'Failed to send voice command');
+    }
     throw new Error('Failed to send voice command');
   }
 };
@@ -142,20 +179,26 @@ export const sendVoiceCommand = async (deviceId, command) => {
  * Launch an app on a TV
  * @param {string} deviceId - ID of the target device
  * @param {string} appId - ID or name of the app to launch
- * @returns {Promise<void>}
+ * @returns {Promise<boolean>} Success status
  */
 export const launchApp = async (deviceId, appId) => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're just simulating a successful response
+    const response = await axios.post(`${API_URL}/api/control/app`, {
+      deviceId,
+      appId
+    });
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 400));
-    
-    console.log(`App ${appId} launched on device ${deviceId}`);
-    return true;
+    if (response.data.status === 'success') {
+      console.log(`App ${appId} launched on device ${deviceId}`);
+      return true;
+    } else {
+      throw new Error(response.data.message || `Failed to launch app ${appId}`);
+    }
   } catch (error) {
     console.error(`Error launching app ${appId}:`, error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || `Failed to launch app ${appId}`);
+    }
     throw new Error(`Failed to launch app ${appId}`);
   }
 };
