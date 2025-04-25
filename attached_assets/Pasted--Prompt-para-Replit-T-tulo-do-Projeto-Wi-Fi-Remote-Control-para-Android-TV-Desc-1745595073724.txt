@@ -1,0 +1,42 @@
+**Prompt para Replit**:
+
+> **Título do Projeto:** Wi-Fi Remote Control para Android TV  
+> **Descrição Geral:** Crie um aplicativo móvel (iOS & Android) que permita controlar qualquer TV Android via Wi-Fi. O app deve oferecer pareamento seguro, interface moderna e intuitiva, funções básicas de controle remoto e recursos premium (voice-control, teclado virtual, atalhos de apps).  
+>  
+> **Requisitos Técnicos:**  
+> 1. **Stack sugerido:** React Native (Expo ou bare), Node.js/Express no backend (se necessário).  
+> 2. **Descoberta e pareamento:** utilize SSDP/mDNS para descobrir TVs na mesma rede, seguido de um fluxo de emparelhamento (token + PIN ou QR Code).  
+> 3. **Comunicação:** envie comandos via protocolo ADB over TCP ou via API de controle remoto da Android TV (HTTP/JSON).  
+> 4. **UI/UX:**  
+>    - Tela de “Lista de Dispositivos” e fluxo de conexão rápido.  
+>    - Layout limpo, botões bem espaçados (ligar/desligar, canais, volume).  
+>    - Tema claro e escuro, animações suaves (use Framer Motion ou Reanimated).  
+> 5. **Funcionalidades Básicas (modo gratuito, 1 dia de uso):**  
+>    - Ligar / Desligar TV  
+>    - Mudar canal (next/prev + teclado numérico)  
+>    - Aumentar/Diminuir volume e Mudo  
+> 6. **Recursos Premium (após o trial):**  
+>    - **Voice Control:** ditado de comandos via Speech-to-Text.  
+>    - **Teclado Virtual:** digitação remota em apps e busca.  
+>    - **Atalhos customizáveis:** botões para Netflix, YouTube, Prime Video etc.  
+> 7. **Internacionalização (i18n):** suporte a 🇬🇧 Inglês, 🇧🇷 Português, 🇪🇸 Espanhol, 🇫🇷 Francês, 🇷🇺 Russo, 🇩🇪 Alemão, 🇨🇳 Chinês (simplificado) e 🇯🇵 Japonês.  
+> 8. **Controle de Acesso:**  
+>    - **Modo Básico:** gratuito por até 1 dia após instalação.  
+>    - **Planos de Pagamento:** diário, semanal, mensal e anual.  
+>    - Exibir tela de upgrade ao fim do trial ou quando o limite é atingido.  
+>  
+> **Entrega Esperada:**  
+> - Estrutura de pastas no Replit com código inicial de frontend e backend.  
+> - Documentação mínima (README.md) explicando como rodar localmente e como testar o pareamento.  
+> - Stub de tela de cobrança/in-app purchase.  
+>  
+> **Integração com Métodos de Pagamento Globais (sugestões):**  
+> - **Stripe** (Stripe API + Expo In-App Payments)  
+> - **PayPal** (REST SDK ou Braintree)  
+> - **Google Play Billing** (para Android)  
+> - **Apple In-App Purchases** (para iOS)  
+> - **Adyen** (Checkout API)  
+> - **Mollie** ou **2Checkout** (pagamentos internacionais)  
+> - **Mercado Pago** (para América Latina)  
+>  
+> *Bônus:* forneça exemplos de chamadas de API e fluxos de UI para cada etapa (pareamento, controle, pagamento).
