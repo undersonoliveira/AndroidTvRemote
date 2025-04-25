@@ -1,100 +1,114 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Appearance } from 'react-native';
+import { STORAGE_KEYS } from '../utils/constants';
 import { lightTheme, darkTheme } from '../theme';
 
-// Create context
+// Criar o contexto
 export const ThemeContext = createContext();
 
-// Theme storage key
-const THEME_PREFERENCE_KEY = '@wifi_remote:theme_preference';
-
 export const ThemeProvider = ({ children }) => {
-  const systemColorScheme = useColorScheme();
-  const [theme, setTheme] = useState(systemColorScheme === 'dark' ? darkTheme : lightTheme);
-  const [themePreference, setThemePreference] = useState('system'); // 'light', 'dark', or 'system'
+  const [themeMode, setThemeMode] = useState('system'); // 'light', 'dark', ou 'system'
+  const [theme, setTheme] = useState(lightTheme);
   
-  // Load theme preference from storage
+  // Carregar tema salvo
   useEffect(() => {
-    (async () => {
-      try {
-        const savedPreference = await AsyncStorage.getItem(THEME_PREFERENCE_KEY);
-        
-        if (savedPreference) {
-          setThemePreference(savedPreference);
-          
-          if (savedPreference === 'light') {
-            setTheme(lightTheme);
-          } else if (savedPreference === 'dark') {
-            setTheme(darkTheme);
-          } else {
-            // System preference
-            setTheme(systemColorScheme === 'dark' ? darkTheme : lightTheme);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading theme preference:', error);
-      }
-    })();
+    loadSavedTheme();
   }, []);
   
-  // Update theme when system color scheme changes
+  // Aplicar tema com base na configuração
   useEffect(() => {
-    if (themePreference === 'system') {
-      setTheme(systemColorScheme === 'dark' ? darkTheme : lightTheme);
+    applyTheme(themeMode);
+    
+    // Escutar mudanças no tema do sistema se estiver no modo 'system'
+    if (themeMode === 'system') {
+      const subscription = Appearance.addChangeListener(({ colorScheme }) => {
+        setTheme(colorScheme === 'dark' ? darkTheme : lightTheme);
+      });
+      
+      return () => {
+        subscription.remove();
+      };
     }
-  }, [systemColorScheme, themePreference]);
+  }, [themeMode]);
   
-  // Toggle between light and dark theme
-  const toggleTheme = async () => {
+  // Carregar o tema salvo
+  const loadSavedTheme = async () => {
     try {
-      let newTheme, newPreference;
-      
-      if (theme.dark) {
-        newTheme = lightTheme;
-        newPreference = 'light';
-      } else {
-        newTheme = darkTheme;
-        newPreference = 'dark';
+      const savedTheme = await AsyncStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
+      if (savedTheme) {
+        const userPrefs = JSON.parse(savedTheme);
+        if (userPrefs.theme) {
+          setThemeMode(userPrefs.theme);
+        }
       }
+    } catch (error) {
+      console.error('Error loading saved theme:', error);
+    }
+  };
+  
+  // Aplicar tema com base no modo
+  const applyTheme = (mode) => {
+    if (mode === 'light') {
+      setTheme(lightTheme);
+    } else if (mode === 'dark') {
+      setTheme(darkTheme);
+    } else {
+      // Sistema
+      const colorScheme = Appearance.getColorScheme();
+      setTheme(colorScheme === 'dark' ? darkTheme : lightTheme);
+    }
+  };
+  
+  // Alternar tema
+  const toggleTheme = async () => {
+    const newThemeMode = themeMode === 'light' ? 'dark' : 'light';
+    setThemeMode(newThemeMode);
+    
+    try {
+      const savedPrefs = await AsyncStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
+      const userPrefs = savedPrefs ? JSON.parse(savedPrefs) : {};
       
-      setTheme(newTheme);
-      setThemePreference(newPreference);
-      await AsyncStorage.setItem(THEME_PREFERENCE_KEY, newPreference);
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.USER_PREFERENCES,
+        JSON.stringify({
+          ...userPrefs,
+          theme: newThemeMode
+        })
+      );
     } catch (error) {
       console.error('Error saving theme preference:', error);
     }
   };
   
-  // Set a specific theme
-  const setSpecificTheme = async (preference) => {
+  // Definir tema específico
+  const setSpecificTheme = async (mode) => {
+    setThemeMode(mode);
+    
     try {
-      let newTheme;
+      const savedPrefs = await AsyncStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
+      const userPrefs = savedPrefs ? JSON.parse(savedPrefs) : {};
       
-      if (preference === 'light') {
-        newTheme = lightTheme;
-      } else if (preference === 'dark') {
-        newTheme = darkTheme;
-      } else {
-        // System preference
-        newTheme = systemColorScheme === 'dark' ? darkTheme : lightTheme;
-      }
-      
-      setTheme(newTheme);
-      setThemePreference(preference);
-      await AsyncStorage.setItem(THEME_PREFERENCE_KEY, preference);
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.USER_PREFERENCES,
+        JSON.stringify({
+          ...userPrefs,
+          theme: mode
+        })
+      );
     } catch (error) {
       console.error('Error saving theme preference:', error);
     }
   };
   
   return (
-    <ThemeContext.Provider 
-      value={{ 
-        theme, 
+    <ThemeContext.Provider
+      value={{
+        theme,
+        themeMode,
         toggleTheme,
         setTheme: setSpecificTheme,
-        themePreference
+        isDarkMode: theme === darkTheme
       }}
     >
       {children}

@@ -1,36 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { API_URL } from '../utils/constants';
-
-// Storage keys
-const USER_ID_KEY = '@wifi_remote:user_id';
-const SUBSCRIPTION_STATUS_KEY = '@wifi_remote:subscription_status';
-const TRIAL_START_KEY = '@wifi_remote:trial_start';
-
-// Trial duration is configured on the server
-// Here we use 24 hours as a fallback
-const TRIAL_DURATION = 24 * 60 * 60 * 1000; // 24 hours
-
-/**
- * Make sure we have a user ID
- * @returns {Promise<string>} User ID
- */
-const ensureUserId = async () => {
-  try {
-    let userId = await AsyncStorage.getItem(USER_ID_KEY);
-    
-    if (!userId) {
-      // Generate a random user ID if none exists
-      userId = `user_${Math.random().toString(36).substr(2, 9)}`;
-      await AsyncStorage.setItem(USER_ID_KEY, userId);
-    }
-    
-    return userId;
-  } catch (error) {
-    console.error('Error ensuring user ID:', error);
-    return null;
-  }
-};
+import { STORAGE_KEYS, API_URL, TRIAL_DURATION } from '../utils/constants';
 
 /**
  * Check if the user has premium access
@@ -38,41 +8,25 @@ const ensureUserId = async () => {
  */
 export const checkPremiumAccess = async () => {
   try {
-    const userId = await ensureUserId();
+    // Verificar status de assinatura no backend
+    const response = await axios.post(`${API_URL}/api/subscription/check`, {
+      // Por enquanto estamos usando IDs simulados
+      userId: 'user123'
+    });
     
-    // Call the backend to check subscription status
-    const response = await axios.post(`${API_URL}/api/subscription/check`, { userId });
-    
-    if (response.data.status === 'success') {
-      // Store the subscription status locally for offline access
-      await AsyncStorage.setItem(
-        SUBSCRIPTION_STATUS_KEY, 
-        response.data.data.hasActiveSubscription ? 'active' : 'inactive'
-      );
-      
-      return response.data.data.hasActiveSubscription;
-    }
-    
-    // Fallback to local check if backend call fails
-    const subscriptionStatus = await AsyncStorage.getItem(SUBSCRIPTION_STATUS_KEY);
-    if (subscriptionStatus === 'active') {
+    if (response.data.hasSubscription) {
       return true;
     }
     
-    // Check if the user is still within the trial period
-    const trialTimeRemaining = await getRemainingTrialTime();
-    return trialTimeRemaining > 0;
+    // Se não tem assinatura ativa, verificar se o período de teste ainda está válido
+    const remainingTime = await getRemainingTrialTime();
+    return remainingTime > 0;
   } catch (error) {
     console.error('Error checking premium access:', error);
     
-    // If API call fails, use local data
-    const subscriptionStatus = await AsyncStorage.getItem(SUBSCRIPTION_STATUS_KEY);
-    if (subscriptionStatus === 'active') {
-      return true;
-    }
-    
-    const trialTimeRemaining = await getRemainingTrialTime();
-    return trialTimeRemaining > 0;
+    // Modo offline ou erro: verificar localmente se o período de teste ainda está válido
+    const remainingTime = await getRemainingTrialTime();
+    return remainingTime > 0;
   }
 };
 
@@ -82,47 +36,42 @@ export const checkPremiumAccess = async () => {
  */
 export const getRemainingTrialTime = async () => {
   try {
-    const userId = await ensureUserId();
+    // Verificar status de teste no backend
+    const response = await axios.post(`${API_URL}/api/subscription/trial/status`, {
+      userId: 'user123'
+    });
     
-    // Call the backend to check trial status
-    const response = await axios.post(`${API_URL}/api/subscription/trial/status`, { userId });
-    
-    if (response.data.status === 'success') {
-      return response.data.data.remainingTime;
+    if (response.data.inTrial) {
+      return response.data.remainingTime;
     }
     
-    // Fallback to local calculation if backend call fails
-    const trialStartStr = await AsyncStorage.getItem(TRIAL_START_KEY);
-    
-    if (!trialStartStr) {
-      // If there's no trial start time recorded, start the trial now
-      const now = new Date().getTime();
-      await AsyncStorage.setItem(TRIAL_START_KEY, now.toString());
-      return TRIAL_DURATION;
-    }
-    
-    const trialStart = parseInt(trialStartStr, 10);
-    const now = new Date().getTime();
-    const elapsed = now - trialStart;
-    
-    return Math.max(0, TRIAL_DURATION - elapsed);
+    return 0;
   } catch (error) {
-    console.error('Error getting remaining trial time:', error);
+    console.error('Error checking trial status:', error);
     
-    // If API call fails, use local data
-    const trialStartStr = await AsyncStorage.getItem(TRIAL_START_KEY);
-    
-    if (!trialStartStr) {
-      const now = new Date().getTime();
-      await AsyncStorage.setItem(TRIAL_START_KEY, now.toString());
-      return TRIAL_DURATION;
+    // Modo offline ou erro: verificar localmente
+    try {
+      const trialInfo = await AsyncStorage.getItem(STORAGE_KEYS.TRIAL_INFO);
+      
+      if (!trialInfo) {
+        return 0;
+      }
+      
+      const { startTime, hasStarted } = JSON.parse(trialInfo);
+      
+      if (!hasStarted) {
+        return TRIAL_DURATION;
+      }
+      
+      const currentTime = new Date().getTime();
+      const elapsedTime = currentTime - startTime;
+      const remainingTime = Math.max(0, TRIAL_DURATION - elapsedTime);
+      
+      return remainingTime;
+    } catch (localError) {
+      console.error('Error checking local trial status:', localError);
+      return 0;
     }
-    
-    const trialStart = parseInt(trialStartStr, 10);
-    const now = new Date().getTime();
-    const elapsed = now - trialStart;
-    
-    return Math.max(0, TRIAL_DURATION - elapsed);
   }
 };
 
@@ -133,29 +82,15 @@ export const getRemainingTrialTime = async () => {
  */
 export const purchasePremium = async (planId) => {
   try {
-    const userId = await ensureUserId();
-    
-    // Call the backend to initiate purchase
     const response = await axios.post(`${API_URL}/api/subscription/purchase`, {
-      userId,
+      userId: 'user123',
       planId
     });
     
-    if (response.data.status === 'success') {
-      // Store the subscription status
-      await AsyncStorage.setItem(SUBSCRIPTION_STATUS_KEY, 'active');
-      
-      console.log(`Purchased plan: ${planId}`);
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to purchase premium');
-    }
+    return response.data;
   } catch (error) {
     console.error('Error purchasing premium:', error);
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to purchase premium');
-    }
-    throw new Error('Failed to purchase premium');
+    throw error;
   }
 };
 
@@ -166,25 +101,15 @@ export const purchasePremium = async (planId) => {
  */
 export const createPaymentIntent = async (planId) => {
   try {
-    const userId = await ensureUserId();
-    
-    // Call the backend to create payment intent
     const response = await axios.post(`${API_URL}/api/subscription/create-payment-intent`, {
-      userId,
+      userId: 'user123',
       planId
     });
     
-    if (response.data.status === 'success') {
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to create payment intent');
-    }
+    return response.data;
   } catch (error) {
     console.error('Error creating payment intent:', error);
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to create payment intent');
-    }
-    throw new Error('Failed to create payment intent');
+    throw error;
   }
 };
 
@@ -195,28 +120,15 @@ export const createPaymentIntent = async (planId) => {
  */
 export const createSubscription = async (planId) => {
   try {
-    const userId = await ensureUserId();
-    
-    // Call the backend to create subscription
     const response = await axios.post(`${API_URL}/api/subscription/create-subscription`, {
-      userId,
+      userId: 'user123',
       planId
     });
     
-    if (response.data.status === 'success') {
-      // Store the subscription status
-      await AsyncStorage.setItem(SUBSCRIPTION_STATUS_KEY, 'active');
-      
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to create subscription');
-    }
+    return response.data;
   } catch (error) {
     console.error('Error creating subscription:', error);
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to create subscription');
-    }
-    throw new Error('Failed to create subscription');
+    throw error;
   }
 };
 
@@ -226,25 +138,14 @@ export const createSubscription = async (planId) => {
  */
 export const cancelSubscription = async () => {
   try {
-    const userId = await ensureUserId();
+    const response = await axios.post(`${API_URL}/api/subscription/cancel`, {
+      userId: 'user123'
+    });
     
-    // Call the backend to cancel subscription
-    const response = await axios.post(`${API_URL}/api/subscription/cancel`, { userId });
-    
-    if (response.data.status === 'success') {
-      // Update the subscription status
-      await AsyncStorage.setItem(SUBSCRIPTION_STATUS_KEY, 'canceled');
-      
-      return true;
-    } else {
-      throw new Error(response.data.message || 'Failed to cancel subscription');
-    }
+    return response.data.success;
   } catch (error) {
     console.error('Error canceling subscription:', error);
-    if (error.response && error.response.data) {
-      throw new Error(error.response.data.message || 'Failed to cancel subscription');
-    }
-    throw new Error('Failed to cancel subscription');
+    throw error;
   }
 };
 
@@ -254,18 +155,11 @@ export const cancelSubscription = async () => {
  */
 export const getSubscriptionPlans = async () => {
   try {
-    // Call the backend to get subscription plans
     const response = await axios.get(`${API_URL}/api/subscription/plans`);
-    
-    if (response.data.status === 'success') {
-      return response.data.data.plans;
-    } else {
-      return [];
-    }
+    return response.data.plans;
   } catch (error) {
     console.error('Error getting subscription plans:', error);
-    // Return empty array on error to avoid crashing
-    return [];
+    throw error;
   }
 };
 
@@ -275,35 +169,37 @@ export const getSubscriptionPlans = async () => {
  */
 export const checkTrialStatus = async () => {
   try {
-    const userId = await ensureUserId();
+    // Verificar se o período de teste já foi iniciado localmente
+    const trialInfo = await AsyncStorage.getItem(STORAGE_KEYS.TRIAL_INFO);
     
-    // Call the backend to check/start trial
-    const response = await axios.post(`${API_URL}/api/subscription/trial/start`, { userId });
+    if (trialInfo) {
+      // O período de teste já existe, nada a fazer
+      return;
+    }
     
-    if (response.data.status === 'success') {
-      // Store the trial start time locally
-      await AsyncStorage.setItem(TRIAL_START_KEY, response.data.data.startTime.toString());
-    } else {
-      // Fallback to local trial start if backend call fails
-      const trialStartStr = await AsyncStorage.getItem(TRIAL_START_KEY);
+    // Iniciar período de teste no backend
+    try {
+      const response = await axios.post(`${API_URL}/api/subscription/trial/start`, {
+        userId: 'user123'
+      });
       
-      if (!trialStartStr) {
-        // If there's no trial start time recorded, start the trial now
-        const now = new Date().getTime();
-        await AsyncStorage.setItem(TRIAL_START_KEY, now.toString());
-      }
+      // Salvar informação localmente
+      await AsyncStorage.setItem(STORAGE_KEYS.TRIAL_INFO, JSON.stringify({
+        startTime: response.data.startTime,
+        hasStarted: true
+      }));
+    } catch (serverError) {
+      console.error('Error starting trial on server:', serverError);
+      
+      // Modo offline ou erro no servidor: iniciar localmente
+      const currentTime = new Date().getTime();
+      await AsyncStorage.setItem(STORAGE_KEYS.TRIAL_INFO, JSON.stringify({
+        startTime: currentTime,
+        hasStarted: true
+      }));
     }
   } catch (error) {
     console.error('Error checking trial status:', error);
-    
-    // If API call fails, use local data
-    const trialStartStr = await AsyncStorage.getItem(TRIAL_START_KEY);
-    
-    if (!trialStartStr) {
-      // If there's no trial start time recorded, start the trial now
-      const now = new Date().getTime();
-      await AsyncStorage.setItem(TRIAL_START_KEY, now.toString());
-    }
   }
 };
 
@@ -313,11 +209,8 @@ export const checkTrialStatus = async () => {
  */
 export const resetAppData = async () => {
   try {
-    await AsyncStorage.removeItem(USER_ID_KEY);
-    await AsyncStorage.removeItem(SUBSCRIPTION_STATUS_KEY);
-    await AsyncStorage.removeItem(TRIAL_START_KEY);
+    await AsyncStorage.clear();
   } catch (error) {
     console.error('Error resetting app data:', error);
-    throw new Error('Failed to reset app data');
   }
 };

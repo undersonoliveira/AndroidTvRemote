@@ -1,63 +1,54 @@
-// Theme configuration for the app
-// Provides light and dark themes with color schemes
+// Definição dos temas da aplicação
 
-// Light theme colors
+// Tema claro
 export const lightTheme = {
-  dark: false,
+  isDark: false,
   colors: {
-    primary: '#4F46E5', // Main brand color (indigo)
-    background: '#FFFFFF', // Background of screens
-    card: '#F9FAFB', // Background of cards, inputs, etc.
-    text: '#1F2937', // Primary text color
-    secondaryText: '#6B7280', // Secondary, less prominent text
-    border: '#E5E7EB', // Borders for cards, inputs, etc.
-    notification: '#EF4444', // Notification/Error color (red)
-    success: '#10B981', // Success color (green)
-    warning: '#F59E0B', // Warning color (amber)
-    error: '#EF4444', // Error color (red)
-    power: '#EF4444', // Power button color (red)
-    premium: '#F59E0B', // Premium feature indicator (amber)
-    buttonText: '#FFFFFF', // Text on primary colored buttons
-    placeholder: '#9CA3AF', // Placeholder text color
-    selected: '#EEF2FF', // Background for selected items
-    cardSelected: '#F3F4F6', // Background for selected cards
-    // Additional colors for specific features
-    mute: '#6B7280', // Mute button color
-    info: '#60A5FA', // Informational color (blue)
-    link: '#2563EB', // Link color (blue)
-    overlay: 'rgba(0, 0, 0, 0.5)', // Overlay for modals
-  }
+    primary: '#2196F3',
+    primaryDark: '#1565C0',
+    secondary: '#FF4081',
+    background: '#F9F9F9',
+    backgroundAlt: '#EAEAEA',
+    card: '#FFFFFF',
+    text: '#212121',
+    secondaryText: '#757575',
+    border: '#E0E0E0',
+    notification: '#FF4081',
+    success: '#4CAF50',
+    warning: '#FFC107',
+    error: '#F44336',
+    buttonText: '#FFFFFF',
+    power: '#F44336',
+    premium: '#FFD700',
+    modalBackground: 'rgba(0, 0, 0, 0.5)',
+  },
 };
 
-// Dark theme colors
+// Tema escuro
 export const darkTheme = {
-  dark: true,
+  isDark: true,
   colors: {
-    primary: '#6366F1', // Main brand color (indigo, slightly lighter for dark mode)
-    background: '#111827', // Background of screens
-    card: '#1F2937', // Background of cards, inputs, etc.
-    text: '#F9FAFB', // Primary text color
-    secondaryText: '#9CA3AF', // Secondary, less prominent text
-    border: '#374151', // Borders for cards, inputs, etc.
-    notification: '#EF4444', // Notification/Error color (red)
-    success: '#10B981', // Success color (green)
-    warning: '#F59E0B', // Warning color (amber)
-    error: '#EF4444', // Error color (red)
-    power: '#EF4444', // Power button color (red)
-    premium: '#F59E0B', // Premium feature indicator (amber)
-    buttonText: '#FFFFFF', // Text on primary colored buttons
-    placeholder: '#6B7280', // Placeholder text color
-    selected: '#312E81', // Background for selected items
-    cardSelected: '#374151', // Background for selected cards
-    // Additional colors for specific features
-    mute: '#9CA3AF', // Mute button color
-    info: '#60A5FA', // Informational color (blue)
-    link: '#3B82F6', // Link color (blue)
-    overlay: 'rgba(0, 0, 0, 0.75)', // Overlay for modals
-  }
+    primary: '#2196F3',
+    primaryDark: '#1565C0',
+    secondary: '#FF4081',
+    background: '#121212',
+    backgroundAlt: '#1E1E1E',
+    card: '#272727',
+    text: '#FFFFFF',
+    secondaryText: '#AAAAAA',
+    border: '#444444',
+    notification: '#FF4081',
+    success: '#4CAF50',
+    warning: '#FFC107',
+    error: '#F44336',
+    buttonText: '#FFFFFF',
+    power: '#F44336',
+    premium: '#FFD700',
+    modalBackground: 'rgba(0, 0, 0, 0.7)',
+  },
 };
 
-// Shared spacing values for consistent layout
+// Espaçamento consistente
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -67,14 +58,9 @@ export const spacing = {
   xxl: 48,
 };
 
-// Typography styles for consistent text rendering
+// Tipografia
 export const typography = {
-  fontFamily: {
-    regular: 'System',
-    medium: 'System',
-    bold: 'System',
-  },
-  fontSize: {
+  fontSizes: {
     xs: 12,
     sm: 14,
     md: 16,
@@ -83,101 +69,59 @@ export const typography = {
     xxl: 24,
     xxxl: 30,
   },
-  lineHeight: {
-    xs: 16,
-    sm: 20,
-    md: 24,
-    lg: 28,
-    xl: 32,
-    xxl: 36,
+  fontWeights: {
+    light: '300',
+    regular: '400',
+    medium: '500',
+    bold: '700',
   },
 };
 
-// Border radius values for consistent styling
+// Bordas arredondadas
 export const borderRadius = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  round: 9999, // For circular elements
+  sm: 4,
+  md: 8,
+  lg: 12,
+  xl: 16,
+  xxl: 24,
+  round: '50%',
 };
 
-// Shadow styles for elevation
+// Sombras
 export const shadows = {
   light: {
-    sm: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 1,
-    },
-    md: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    lg: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
-      elevation: 4,
-    },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.0,
+    elevation: 1,
   },
-  dark: {
-    sm: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.15,
-      shadowRadius: 2,
-      elevation: 1,
-    },
-    md: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.2,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    lg: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 4,
-    },
+  medium: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  heavy: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
   },
 };
 
-// Animation timing configurations
+// Animações
 export const animations = {
   timing: {
-    fast: 150,
-    normal: 300,
+    fast: 200,
+    medium: 300,
     slow: 500,
   },
-};
-
-// Export combined theme objects
-export default {
-  light: {
-    ...lightTheme,
-    spacing,
-    typography,
-    borderRadius,
-    shadows: shadows.light,
-    animations,
-  },
-  dark: {
-    ...darkTheme,
-    spacing,
-    typography,
-    borderRadius,
-    shadows: shadows.dark,
-    animations,
+  spring: {
+    damping: 8,
+    mass: 1,
+    stiffness: 100,
   },
 };

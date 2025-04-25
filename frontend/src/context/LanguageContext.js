@@ -1,58 +1,62 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Localization from 'expo-localization';
+import { STORAGE_KEYS } from '../utils/constants';
 import i18n from '../i18n';
 
-// Create context
+// Criar o contexto
 export const LanguageContext = createContext();
 
-// Language storage key
-const LANGUAGE_PREFERENCE_KEY = '@wifi_remote:language_preference';
-
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguageState] = useState('en');
+  const [language, setLanguage] = useState(i18n.language);
   
-  // Load language preference from storage
+  // Carregar idioma salvo
   useEffect(() => {
-    (async () => {
-      try {
-        // Try to get stored language preference
-        const savedLanguage = await AsyncStorage.getItem(LANGUAGE_PREFERENCE_KEY);
-        
-        if (savedLanguage) {
-          // If a language preference was found, use it
-          setLanguageState(savedLanguage);
-          i18n.changeLanguage(savedLanguage);
-        } else {
-          // Otherwise, use device locale if it's one of our supported languages
-          const deviceLanguage = Localization.locale.split('-')[0];
-          const supportedLanguages = ['en', 'pt', 'es', 'fr', 'ru', 'de', 'zh', 'ja'];
-          
-          if (supportedLanguages.includes(deviceLanguage)) {
-            setLanguageState(deviceLanguage);
-            i18n.changeLanguage(deviceLanguage);
-            await AsyncStorage.setItem(LANGUAGE_PREFERENCE_KEY, deviceLanguage);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading language preference:', error);
-      }
-    })();
+    loadSavedLanguage();
   }, []);
   
-  // Function to change the language
-  const setLanguage = async (languageCode) => {
+  // Carregar o idioma salvo
+  const loadSavedLanguage = async () => {
     try {
-      setLanguageState(languageCode);
-      i18n.changeLanguage(languageCode);
-      await AsyncStorage.setItem(LANGUAGE_PREFERENCE_KEY, languageCode);
+      const savedPrefs = await AsyncStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
+      if (savedPrefs) {
+        const userPrefs = JSON.parse(savedPrefs);
+        if (userPrefs.language) {
+          changeLanguage(userPrefs.language);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading saved language:', error);
+    }
+  };
+  
+  // Alterar idioma
+  const changeLanguage = async (lang) => {
+    setLanguage(lang);
+    i18n.changeLanguage(lang);
+    
+    try {
+      const savedPrefs = await AsyncStorage.getItem(STORAGE_KEYS.USER_PREFERENCES);
+      const userPrefs = savedPrefs ? JSON.parse(savedPrefs) : {};
+      
+      await AsyncStorage.setItem(
+        STORAGE_KEYS.USER_PREFERENCES,
+        JSON.stringify({
+          ...userPrefs,
+          language: lang
+        })
+      );
     } catch (error) {
       console.error('Error saving language preference:', error);
     }
   };
   
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
+    <LanguageContext.Provider
+      value={{
+        language,
+        changeLanguage
+      }}
+    >
       {children}
     </LanguageContext.Provider>
   );

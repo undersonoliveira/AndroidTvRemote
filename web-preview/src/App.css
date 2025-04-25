@@ -1,0 +1,139 @@
+/* General App Styling */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+.dark-theme {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+.light-theme {
+  background-color: #f5f5f5;
+  color: #333333;
+}
+
+/* Header Styling */
+.app-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark-theme .app-header {
+  background-color: #1e1e1e;
+}
+
+.light-theme .app-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* Main Content Styling */
+main {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+
+/* Footer Styling */
+footer {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.dark-theme footer {
+  background-color: #1e1e1e;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.light-theme footer {
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Button Styling */
+button {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.dark-theme button {
+  background-color: #2d2d2d;
+  color: white;
+  border: 1px solid #444;
+}
+
+.light-theme button {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* Remote Control Button Styling */
+.remote-button {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 5px;
+  font-size: 1.2rem;
+}
+
+.dark-theme .remote-button {
+  background-color: #333;
+}
+
+.light-theme .remote-button {
+  background-color: #e8e8e8;
+}
+
+.primary-button {
+  background-color: #6200ee !important;
+  color: white !important;
+}
+
+.power-button {
+  background-color: #cf000f !important;
+  color: white !important;
+}
