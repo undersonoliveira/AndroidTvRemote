@@ -1,54 +1,36 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import * as Localization from 'expo-localization';
 
-// Import translations
-import translationEN from './translations/en';
-import translationPT from './translations/pt';
-import translationES from './translations/es';
-import translationFR from './translations/fr';
-import translationRU from './translations/ru';
-import translationDE from './translations/de';
-import translationZH from './translations/zh';
-import translationJA from './translations/ja';
+// Importa as traduções
+import enTranslations from './translations/en';
+import ptTranslations from './translations/pt';
+import esTranslations from './translations/es';
+import frTranslations from './translations/fr';
+import ruTranslations from './translations/ru';
+import deTranslations from './translations/de';
+import zhTranslations from './translations/zh';
+import jaTranslations from './translations/ja';
 
-// the translations
-const resources = {
-  en: {
-    translation: translationEN
-  },
-  pt: {
-    translation: translationPT
-  },
-  es: {
-    translation: translationES
-  },
-  fr: {
-    translation: translationFR
-  },
-  ru: {
-    translation: translationRU
-  },
-  de: {
-    translation: translationDE
-  },
-  zh: {
-    translation: translationZH
-  },
-  ja: {
-    translation: translationJA
-  }
-};
-
+// Configuração do i18n
 i18n
-  .use(initReactI18next) // passes i18n down to react-i18next
+  .use(initReactI18next)
   .init({
-    resources,
-    lng: 'en', // default language
-    fallbackLng: 'en', // fallback language
-    
+    resources: {
+      en: { translation: enTranslations },
+      pt: { translation: ptTranslations || enTranslations },
+      es: { translation: esTranslations || enTranslations },
+      fr: { translation: frTranslations || enTranslations },
+      ru: { translation: ruTranslations || enTranslations },
+      de: { translation: deTranslations || enTranslations },
+      zh: { translation: zhTranslations || enTranslations },
+      ja: { translation: jaTranslations || enTranslations },
+    },
+    fallbackLng: 'en',
     interpolation: {
-      escapeValue: false // react already safes from xss
-    }
+      escapeValue: false,
+    },
+    lng: Localization.locale.split('-')[0],
   });
 
 export default i18n;
