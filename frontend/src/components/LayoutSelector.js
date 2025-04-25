@@ -1,210 +1,238 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
-  TouchableOpacity,
-  ScrollView
+  TouchableOpacity, 
+  FlatList, 
+  Image 
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { Feather } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming,
+  withSpring
+} from 'react-native-reanimated';
 
-// Context
-import { RemoteLayoutContext, LAYOUTS } from '../context/RemoteLayoutContext';
+// Contexts
 import { ThemeContext } from '../context/ThemeContext';
+import { RemoteLayoutContext } from '../context/RemoteLayoutContext';
+
+const LayoutOption = ({ name, icon, isSelected, onSelect, theme }) => {
+  // Animation values
+  const scale = useSharedValue(1);
+  
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }]
+    };
+  });
+  
+  const handlePress = () => {
+    scale.value = withSpring(1.05, { damping: 10 });
+    setTimeout(() => {
+      scale.value = withTiming(1);
+      onSelect();
+    }, 100);
+  };
+  
+  return (
+    <Animated.View style={[animatedStyle, styles.layoutOptionContainer]}>
+      <TouchableOpacity
+        style={[
+          styles.layoutOption,
+          { 
+            backgroundColor: theme.colors.card,
+            borderColor: isSelected ? theme.colors.primary : theme.colors.border
+          }
+        ]}
+        onPress={handlePress}
+      >
+        <View 
+          style={[
+            styles.layoutIcon, 
+            { backgroundColor: isSelected ? theme.colors.primary : theme.colors.backgroundAlt }
+          ]}
+        >
+          <Feather 
+            name={icon} 
+            size={28} 
+            color={isSelected ? theme.colors.buttonText : theme.colors.text} 
+          />
+        </View>
+        <Text style={[styles.layoutName, { color: theme.colors.text }]}>
+          {name}
+        </Text>
+        
+        {isSelected && (
+          <View style={[styles.selectedIndicator, { backgroundColor: theme.colors.primary }]}>
+            <Feather name="check" size={14} color={theme.colors.buttonText} />
+          </View>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 
 export default function LayoutSelector({ onClose }) {
   const { t } = useTranslation();
   const { theme } = useContext(ThemeContext);
   const { 
-    currentLayout, 
-    changeLayout,
-    resetToDefault,
+    availableLayouts, 
+    currentLayout,
+    setCurrentLayout
   } = useContext(RemoteLayoutContext);
-
-  const handleLayoutChange = (layoutName) => {
-    changeLayout(layoutName);
-    if (onClose) onClose();
+  
+  // Fade animation for the modal
+  const fadeOpacity = useSharedValue(0);
+  
+  const fadeStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeOpacity.value
+    };
+  });
+  
+  React.useEffect(() => {
+    fadeOpacity.value = withTiming(1, { duration: 300 });
+  }, []);
+  
+  const handleClose = () => {
+    fadeOpacity.value = withTiming(0, { duration: 200 });
+    setTimeout(onClose, 200);
   };
-
+  
+  const handleSelectLayout = (layoutId) => {
+    setCurrentLayout(layoutId);
+    handleClose();
+  };
+  
   const layoutOptions = [
-    {
-      id: LAYOUTS.STANDARD,
-      name: t('layouts.standard'),
-      icon: 'tv',
-      description: t('layouts.standardDesc'),
-    },
-    {
-      id: LAYOUTS.COMPACT,
-      name: t('layouts.compact'),
-      icon: 'minimize-2',
-      description: t('layouts.compactDesc'),
-    },
-    {
-      id: LAYOUTS.EXPANDED,
-      name: t('layouts.expanded'),
-      icon: 'maximize-2',
-      description: t('layouts.expandedDesc'),
-    },
-    {
-      id: LAYOUTS.CUSTOM,
-      name: t('layouts.custom'),
-      icon: 'edit-3',
-      description: t('layouts.customDesc'),
-    },
+    { id: 'basic', name: t('remote.basicLayout'), icon: 'square' },
+    { id: 'full', name: t('remote.fullLayout'), icon: 'grid' },
+    { id: 'compact', name: t('remote.compactLayout'), icon: 'pocket' },
+    { id: 'media', name: t('remote.mediaLayout'), icon: 'play-circle' },
+    { id: 'gaming', name: t('remote.gamingLayout'), icon: 'target' },
+    { id: 'custom', name: t('remote.customLayout'), icon: 'sliders' }
   ];
-
+  
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.card }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          {t('layouts.selectLayout')}
-        </Text>
-        <TouchableOpacity 
-          style={styles.closeButton}
-          onPress={onClose}
-        >
-          <Feather name="x" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollContainer}>
-        {layoutOptions.map((layout) => (
-          <TouchableOpacity
-            key={layout.id}
-            style={[
-              styles.layoutOption,
-              currentLayout === layout.id && { 
-                backgroundColor: theme.colors.cardHighlight,
-                borderColor: theme.colors.primary 
-              }
-            ]}
-            onPress={() => handleLayoutChange(layout.id)}
-          >
-            <View style={styles.layoutContent}>
-              <View style={[
-                styles.layoutIcon, 
-                { backgroundColor: theme.colors.primary }
-              ]}>
-                <Feather 
-                  name={layout.icon} 
-                  size={20} 
-                  color={theme.colors.buttonText} 
-                />
-              </View>
-              <View style={styles.layoutInfo}>
-                <Text style={[styles.layoutName, { color: theme.colors.text }]}>
-                  {layout.name}
-                </Text>
-                <Text style={[
-                  styles.layoutDescription, 
-                  { color: theme.colors.secondaryText }
-                ]}>
-                  {layout.description}
-                </Text>
-              </View>
-            </View>
-            {currentLayout === layout.id && (
-              <Feather 
-                name="check" 
-                size={20} 
-                color={theme.colors.primary} 
-              />
-            )}
-          </TouchableOpacity>
-        ))}
-
-        <TouchableOpacity
-          style={[styles.resetButton, { borderColor: theme.colors.border }]}
-          onPress={() => {
-            resetToDefault();
-            if (onClose) onClose();
-          }}
-        >
-          <Feather name="refresh-cw" size={16} color={theme.colors.text} />
-          <Text style={[styles.resetText, { color: theme.colors.text }]}>
-            {t('layouts.resetToDefault')}
+    <Animated.View 
+      style={[
+        styles.container, 
+        { backgroundColor: theme.colors.modalBackground },
+        fadeStyle
+      ]}
+    >
+      <View style={[styles.content, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            {t('remote.selectLayout')}
           </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Feather name="x" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={[styles.subtitle, { color: theme.colors.secondaryText }]}>
+          {t('remote.layoutTip')}
+        </Text>
+        
+        <FlatList
+          data={layoutOptions}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          contentContainerStyle={styles.optionsGrid}
+          renderItem={({ item }) => (
+            <LayoutOption
+              name={item.name}
+              icon={item.icon}
+              isSelected={currentLayout === item.id}
+              onSelect={() => handleSelectLayout(item.id)}
+              theme={theme}
+            />
+          )}
+        />
+      </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 15,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    width: '85%',
+    borderRadius: 16,
     overflow: 'hidden',
     maxHeight: '80%',
-    width: '90%',
-    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   closeButton: {
     padding: 5,
   },
-  scrollContainer: {
+  subtitle: {
+    fontSize: 14,
+    marginHorizontal: 20,
+    marginBottom: 15,
+  },
+  optionsGrid: {
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingBottom: 20,
+  },
+  layoutOptionContainer: {
+    width: '50%',
+    padding: 5,
+    marginBottom: 10,
   },
   layoutOption: {
-    flexDirection: 'row',
+    padding: 15,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 15,
-    paddingHorizontal: 10,
-    marginVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  layoutContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
+    borderWidth: 2,
+    aspectRatio: 1,
+    position: 'relative',
   },
   layoutIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
-  },
-  layoutInfo: {
-    flex: 1,
+    marginBottom: 10,
   },
   layoutName: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  layoutDescription: {
     fontSize: 14,
+    fontWeight: '500',
   },
-  resetButton: {
-    flexDirection: 'row',
+  selectedIndicator: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    marginVertical: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  resetText: {
-    marginLeft: 8,
-    fontSize: 14,
+    borderWidth: 2,
+    borderColor: 'white',
   },
 });

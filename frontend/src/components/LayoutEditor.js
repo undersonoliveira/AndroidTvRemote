@@ -1,266 +1,300 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
-  TouchableOpacity,
-  ScrollView,
-  Switch
+  TouchableOpacity, 
+  ScrollView, 
+  Switch 
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { Feather } from '@expo/vector-icons';
-import Animated, { useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming,
+  withSpring
+} from 'react-native-reanimated';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 
-// Context
-import { RemoteLayoutContext } from '../context/RemoteLayoutContext';
+// Contexts
 import { ThemeContext } from '../context/ThemeContext';
+import { RemoteLayoutContext } from '../context/RemoteLayoutContext';
 
-// Button configuration with user-friendly names and icons
-const buttonConfig = {
-  power: { name: 'Power', icon: 'power' },
-  volume: { name: 'Volume Controls', icon: 'volume-2' },
-  channels: { name: 'Channel Controls', icon: 'chevrons-up' },
-  dpad: { name: 'Directional Pad', icon: 'navigation' },
-  keypad: { name: 'Numeric Keypad', icon: 'hash' },
-  shortcuts: { name: 'App Shortcuts', icon: 'grid' },
-  voice: { name: 'Voice Control', icon: 'mic' },
-  keyboard: { name: 'Virtual Keyboard', icon: 'type' },
+// Button Item component for the draggable list
+const ButtonItem = ({ item, isVisible, onToggleVisibility, theme, drag, isActive }) => {
+  const scale = useSharedValue(1);
+  
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+      backgroundColor: isActive ? theme.colors.backgroundAlt : theme.colors.card,
+      borderColor: isActive ? theme.colors.primary : theme.colors.border,
+    };
+  });
+  
+  let iconName = 'circle';
+  let buttonLabel = item.label;
+  
+  // Determine icon based on button type
+  switch (item.id) {
+    case 'power':
+      iconName = 'power';
+      break;
+    case 'volume':
+      iconName = 'volume-2';
+      break;
+    case 'dpad':
+      iconName = 'navigation';
+      break;
+    case 'channels':
+      iconName = 'tv';
+      break;
+    case 'keypad':
+      iconName = 'hash';
+      break;
+    case 'shortcuts':
+      iconName = 'grid';
+      break;
+    case 'voice':
+      iconName = 'mic';
+      break;
+    case 'keyboard':
+      iconName = 'type';
+      break;
+    default:
+      iconName = 'circle';
+  }
+  
+  return (
+    <Animated.View style={[styles.buttonItemContainer, animatedStyle]}>
+      <TouchableOpacity 
+        style={styles.dragHandle}
+        onLongPress={drag}
+      >
+        <Feather name="menu" size={22} color={theme.colors.secondaryText} />
+      </TouchableOpacity>
+      
+      <View style={styles.buttonInfo}>
+        <Feather name={iconName} size={20} color={theme.colors.text} />
+        <Text style={[styles.buttonLabel, { color: theme.colors.text }]}>
+          {buttonLabel}
+        </Text>
+      </View>
+      
+      <Switch
+        value={isVisible}
+        onValueChange={onToggleVisibility}
+        trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
+        thumbColor={isVisible ? theme.colors.buttonText : theme.colors.background}
+      />
+    </Animated.View>
+  );
 };
 
 export default function LayoutEditor({ onClose }) {
   const { t } = useTranslation();
   const { theme } = useContext(ThemeContext);
   const { 
+    buttonOrder, 
+    setButtonOrder,
     buttonVisibility, 
-    buttonOrder,
-    favoriteButtons,
-    toggleButtonVisibility,
-    toggleFavoriteButton,
-    moveButton
+    setButtonVisibility,
+    resetToDefault,
+    saveCustomLayout
   } = useContext(RemoteLayoutContext);
-
+  
+  // Map button IDs to labels
+  const buttonItems = buttonOrder.map(id => ({
+    id,
+    label: t(`remote.${id === 'dpad' ? 'guide' : id}`)
+  }));
+  
+  // Fade animation for the modal
+  const fadeOpacity = useSharedValue(0);
+  
+  const fadeStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeOpacity.value
+    };
+  });
+  
+  React.useEffect(() => {
+    fadeOpacity.value = withTiming(1, { duration: 300 });
+  }, []);
+  
+  const handleClose = () => {
+    fadeOpacity.value = withTiming(0, { duration: 200 });
+    setTimeout(onClose, 200);
+  };
+  
+  const handleResetLayout = () => {
+    resetToDefault();
+  };
+  
+  const handleSaveLayout = () => {
+    saveCustomLayout();
+    handleClose();
+  };
+  
+  const toggleButtonVisibility = (buttonId) => {
+    setButtonVisibility({
+      ...buttonVisibility,
+      [buttonId]: !buttonVisibility[buttonId]
+    });
+  };
+  
+  const handleDragEnd = ({ data }) => {
+    setButtonOrder(data.map(item => item.id));
+  };
+  
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.card }]}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          {t('layouts.customizeLayout')}
-        </Text>
-        <TouchableOpacity 
-          style={styles.closeButton}
-          onPress={onClose}
-        >
-          <Feather name="x" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollContainer}>
-        <Text style={[styles.sectionTitle, { color: theme.colors.secondaryText }]}>
-          {t('layouts.dragToReorder')}
-        </Text>
-        
-        {buttonOrder.map((buttonId) => (
-          <Animated.View key={buttonId} style={styles.buttonItem}>
-            <View style={styles.buttonControls}>
-              <Switch
-                value={buttonVisibility[buttonId]}
-                onValueChange={() => toggleButtonVisibility(buttonId)}
-                trackColor={{ false: theme.colors.border, true: theme.colors.primary }}
-                thumbColor={buttonVisibility[buttonId] ? theme.colors.buttonText : '#f4f3f4'}
-              />
-              
-              <TouchableOpacity 
-                style={[
-                  styles.favoriteButton,
-                  favoriteButtons.includes(buttonId) ? 
-                    { backgroundColor: theme.colors.primary } : 
-                    { borderColor: theme.colors.border, borderWidth: 1 }
-                ]}
-                onPress={() => toggleFavoriteButton(buttonId)}
-              >
-                <Feather 
-                  name="star" 
-                  size={16} 
-                  color={favoriteButtons.includes(buttonId) ? 
-                    theme.colors.buttonText : 
-                    theme.colors.text
-                  } 
-                />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={[
-              styles.buttonInfo,
-              { 
-                opacity: buttonVisibility[buttonId] ? 1 : 0.5,
-                backgroundColor: theme.colors.cardHighlight 
-              }
-            ]}>
-              <View style={styles.buttonNameSection}>
-                <View style={[
-                  styles.buttonIcon, 
-                  { backgroundColor: theme.colors.primary }
-                ]}>
-                  <Feather 
-                    name={buttonConfig[buttonId].icon} 
-                    size={16} 
-                    color={theme.colors.buttonText} 
-                  />
-                </View>
-                <Text style={[styles.buttonName, { color: theme.colors.text }]}>
-                  {t(`buttons.${buttonId}`, buttonConfig[buttonId].name)}
-                </Text>
-              </View>
-              
-              <View style={styles.reorderButtons}>
-                <TouchableOpacity 
-                  style={styles.moveButton}
-                  onPress={() => moveButton(buttonId, 'up')}
-                >
-                  <Feather name="chevron-up" size={20} color={theme.colors.text} />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.moveButton}
-                  onPress={() => moveButton(buttonId, 'down')}
-                >
-                  <Feather name="chevron-down" size={20} color={theme.colors.text} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </Animated.View>
-        ))}
-        
-        <View style={styles.helpSection}>
-          <Text style={[styles.helpTitle, { color: theme.colors.text }]}>
-            {t('layouts.layoutTips')}
+    <Animated.View 
+      style={[
+        styles.container, 
+        { backgroundColor: theme.colors.modalBackground },
+        fadeStyle
+      ]}
+    >
+      <View style={[styles.content, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            {t('remote.editLayout')}
           </Text>
-          <View style={styles.helpItem}>
-            <Feather name="eye" size={16} color={theme.colors.primary} style={styles.helpIcon} />
-            <Text style={[styles.helpText, { color: theme.colors.secondaryText }]}>
-              {t('layouts.visibilityTip')}
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <Feather name="star" size={16} color={theme.colors.primary} style={styles.helpIcon} />
-            <Text style={[styles.helpText, { color: theme.colors.secondaryText }]}>
-              {t('layouts.favoriteTip')}
-            </Text>
-          </View>
-          <View style={styles.helpItem}>
-            <Feather name="arrow-up-down" size={16} color={theme.colors.primary} style={styles.helpIcon} />
-            <Text style={[styles.helpText, { color: theme.colors.secondaryText }]}>
-              {t('layouts.reorderTip')}
-            </Text>
-          </View>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <Feather name="x" size={24} color={theme.colors.text} />
+          </TouchableOpacity>
         </View>
-      </ScrollView>
-    </View>
+        
+        <Text style={[styles.subtitle, { color: theme.colors.secondaryText }]}>
+          {t('remote.dragToReorder')}
+        </Text>
+        
+        <View style={styles.listContainer}>
+          <DraggableFlatList
+            data={buttonItems}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item, drag, isActive }) => (
+              <ButtonItem 
+                item={item}
+                isVisible={buttonVisibility[item.id]}
+                onToggleVisibility={() => toggleButtonVisibility(item.id)}
+                theme={theme}
+                drag={drag}
+                isActive={isActive}
+              />
+            )}
+            onDragEnd={handleDragEnd}
+            contentContainerStyle={styles.dragListContent}
+          />
+        </View>
+        
+        <View style={styles.buttonRow}>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.colors.card }]}
+            onPress={handleResetLayout}
+          >
+            <Feather name="refresh-cw" size={18} color={theme.colors.text} />
+            <Text style={[styles.actionButtonText, { color: theme.colors.text }]}>
+              {t('remote.resetLayout')}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: theme.colors.primary }]}
+            onPress={handleSaveLayout}
+          >
+            <Feather name="save" size={18} color={theme.colors.buttonText} />
+            <Text style={[styles.actionButtonText, { color: theme.colors.buttonText }]}>
+              {t('remote.saveLayout')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 15,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    width: '85%',
+    borderRadius: 16,
     overflow: 'hidden',
     maxHeight: '80%',
-    width: '90%',
-    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    paddingTop: 20,
+    paddingBottom: 10,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   closeButton: {
     padding: 5,
   },
-  scrollContainer: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  sectionTitle: {
+  subtitle: {
     fontSize: 14,
-    marginBottom: 10,
-    marginTop: 5,
-  },
-  buttonItem: {
+    marginHorizontal: 20,
     marginBottom: 15,
   },
-  buttonControls: {
+  listContainer: {
+    flex: 1,
+    minHeight: 300,
+  },
+  dragListContent: {
+    paddingHorizontal: 20,
+  },
+  buttonItemContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     marginBottom: 8,
-    paddingHorizontal: 5,
-  },
-  favoriteButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-  },
-  buttonNameSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  buttonIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  buttonName: {
-    fontWeight: '500',
-  },
-  reorderButtons: {
-    flexDirection: 'row',
-  },
-  moveButton: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  helpSection: {
-    marginTop: 20,
-    marginBottom: 30,
-    padding: 15,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
   },
-  helpTitle: {
-    fontWeight: 'bold',
-    marginBottom: 10,
+  dragHandle: {
+    paddingRight: 15,
   },
-  helpItem: {
+  buttonInfo: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 5,
   },
-  helpIcon: {
-    marginRight: 10,
+  buttonLabel: {
+    marginLeft: 10,
+    fontSize: 16,
   },
-  helpText: {
-    fontSize: 13,
-    flex: 1,
-  }
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minWidth: '45%',
+    justifyContent: 'center',
+  },
+  actionButtonText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '500',
+  },
 });

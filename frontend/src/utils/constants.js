@@ -7,6 +7,9 @@ export const API_URL = window.location.hostname === 'localhost' || window.locati
 export const STORAGE_KEYS = {
   RECENT_DEVICES: '@wifi_remote:recent_devices',
   USER_PREFERENCES: '@wifi_remote:user_preferences',
+  LAYOUT: '@wifi_remote:custom_layout',
+  FAVORITES: '@wifi_remote:favorite_buttons',
+  CURRENT_LAYOUT: '@wifi_remote:current_layout',
 };
 
 // Default app settings

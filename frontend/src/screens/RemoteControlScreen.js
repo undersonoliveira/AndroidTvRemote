@@ -163,6 +163,272 @@ export default function RemoteControlScreen({ route, navigation }) {
     navigation.navigate('Subscription');
   };
 
+  // Function to render remote control sections based on buttonOrder and visibility
+  const renderControlSections = () => {
+    return buttonOrder.map(buttonId => {
+      if (!buttonVisibility[buttonId]) return null;
+      
+      // Determine if this button is a favorite
+      const isFavorite = favoriteButtons.includes(buttonId);
+      
+      // Special style for favorite buttons
+      const favoriteStyle = isFavorite ? {
+        borderColor: theme.colors.primary,
+        borderWidth: 2,
+        borderRadius: 12,
+        padding: 10,
+        marginBottom: 15,
+      } : null;
+      
+      switch (buttonId) {
+        case 'power':
+          return (
+            <View key="power" style={[styles.powerSection, favoriteStyle]}>
+              <TouchableOpacity 
+                style={[styles.powerButton, { backgroundColor: theme.colors.power }]}
+                onPress={handlePowerButton}
+              >
+                <Feather name="power" size={24} color={theme.colors.buttonText} />
+              </TouchableOpacity>
+            </View>
+          );
+          
+        case 'volume':
+          return (
+            <View key="volume" style={[styles.controlSection, favoriteStyle]}>
+              <View style={styles.volumeControls}>
+                <RemoteButton 
+                  icon="volume-x" 
+                  label={t('remote.mute')}
+                  onPress={() => handleVolumeButton('mute')}
+                  theme={theme}
+                  isActive={isMuted}
+                />
+                <RemoteButton 
+                  icon="volume-1" 
+                  label={t('remote.volumeDown')}
+                  onPress={() => handleVolumeButton('down')}
+                  theme={theme}
+                />
+                <RemoteButton 
+                  icon="volume-2" 
+                  label={t('remote.volumeUp')}
+                  onPress={() => handleVolumeButton('up')}
+                  theme={theme}
+                />
+              </View>
+            </View>
+          );
+          
+        case 'dpad':
+          return (
+            <View key="dpad" style={[styles.dPadSection, favoriteStyle]}>
+              <View style={styles.dPadRow}>
+                <View style={styles.dPadPlaceholder} />
+                <TouchableOpacity 
+                  style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => handleDirectionalPad('up')}
+                >
+                  <Feather name="chevron-up" size={30} color={theme.colors.buttonText} />
+                </TouchableOpacity>
+                <View style={styles.dPadPlaceholder} />
+              </View>
+              
+              <View style={styles.dPadRow}>
+                <TouchableOpacity 
+                  style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => handleDirectionalPad('left')}
+                >
+                  <Feather name="chevron-left" size={30} color={theme.colors.buttonText} />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.dPadCenterButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => handleDirectionalPad('ok')}
+                >
+                  <Text style={[styles.dPadCenterText, { color: theme.colors.buttonText }]}>OK</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => handleDirectionalPad('right')}
+                >
+                  <Feather name="chevron-right" size={30} color={theme.colors.buttonText} />
+                </TouchableOpacity>
+              </View>
+              
+              <View style={styles.dPadRow}>
+                <View style={styles.dPadPlaceholder} />
+                <TouchableOpacity 
+                  style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
+                  onPress={() => handleDirectionalPad('down')}
+                >
+                  <Feather name="chevron-down" size={30} color={theme.colors.buttonText} />
+                </TouchableOpacity>
+                <View style={styles.dPadPlaceholder} />
+              </View>
+            </View>
+          );
+          
+        case 'channels':
+          return (
+            <View key="channels" style={[styles.controlSection, favoriteStyle]}>
+              <View style={styles.channelControls}>
+                <RemoteButton 
+                  icon="chevrons-down" 
+                  label={t('remote.channelDown')}
+                  onPress={() => handleChannelButton('down')}
+                  theme={theme}
+                />
+                <RemoteButton 
+                  icon="list" 
+                  label={t('remote.guide')}
+                  onPress={() => handleChannelButton('guide')}
+                  theme={theme}
+                />
+                <RemoteButton 
+                  icon="chevrons-up" 
+                  label={t('remote.channelUp')}
+                  onPress={() => handleChannelButton('up')}
+                  theme={theme}
+                />
+              </View>
+            </View>
+          );
+          
+        case 'keypad':
+          return (
+            <View key="keypad" style={favoriteStyle}>
+              <TouchableOpacity 
+                style={[
+                  styles.keypadButton, 
+                  { 
+                    backgroundColor: showKeypad ? theme.colors.primary : theme.colors.card,
+                    borderColor: theme.colors.border
+                  }
+                ]}
+                onPress={() => setShowKeypad(!showKeypad)}
+              >
+                <Feather 
+                  name="hash" 
+                  size={20} 
+                  color={showKeypad ? theme.colors.buttonText : theme.colors.text} 
+                />
+                <Text 
+                  style={[
+                    styles.keypadButtonText, 
+                    { 
+                      color: showKeypad ? theme.colors.buttonText : theme.colors.text 
+                    }
+                  ]}
+                >
+                  {t('remote.numpad')}
+                </Text>
+              </TouchableOpacity>
+
+              {showKeypad && (
+                <View style={styles.keypadSection}>
+                  <NumericKeypad onPress={handleKeypadNumber} theme={theme} />
+                </View>
+              )}
+            </View>
+          );
+          
+        case 'shortcuts':
+          return (
+            <View key="shortcuts" style={[styles.shortcutsSection, favoriteStyle]}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                {t('remote.shortcuts')}
+              </Text>
+              <View style={styles.shortcutsGrid}>
+                <AppShortcutButton 
+                  name="Netflix" 
+                  icon="play" 
+                  color="#E50914"
+                  onPress={() => handlePremiumFeature('app-netflix')}
+                  theme={theme}
+                  isPremium={!hasPremiumAccess}
+                  appId="netflix"
+                />
+                <AppShortcutButton 
+                  name="YouTube" 
+                  icon="youtube" 
+                  color="#FF0000"
+                  onPress={() => handlePremiumFeature('app-youtube')}
+                  theme={theme}
+                  isPremium={!hasPremiumAccess}
+                  appId="youtube"
+                />
+                <AppShortcutButton 
+                  name="Prime" 
+                  icon="video" 
+                  color="#00A8E1"
+                  onPress={() => handlePremiumFeature('app-prime')}
+                  theme={theme}
+                  isPremium={!hasPremiumAccess}
+                  appId="prime"
+                />
+                <AppShortcutButton 
+                  name={t('remote.more')} 
+                  icon="grid" 
+                  color="#747474"
+                  onPress={() => handlePremiumFeature('app-more')}
+                  theme={theme}
+                  isPremium={!hasPremiumAccess}
+                  appId="more"
+                />
+              </View>
+            </View>
+          );
+          
+        case 'voice':
+          return (
+            <View key="voice" style={favoriteStyle}>
+              <VoiceControlButton 
+                onPress={() => handlePremiumFeature('voice')}
+                device={device}
+                theme={theme}
+                isPremium={!hasPremiumAccess}
+                hasPremiumAccess={hasPremiumAccess}
+              />
+            </View>
+          );
+          
+        case 'keyboard':
+          return (
+            <View key="keyboard" style={[styles.premiumSection, favoriteStyle]}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                {t('remote.premiumFeatures')}
+              </Text>
+              <TouchableOpacity 
+                style={[
+                  styles.keyboardButton, 
+                  { 
+                    backgroundColor: theme.colors.card,
+                    borderColor: theme.colors.border 
+                  }
+                ]}
+                onPress={() => handlePremiumFeature('keyboard')}
+              >
+                <View style={styles.keyboardButtonContent}>
+                  <Feather name="type" size={24} color={theme.colors.text} />
+                  <Text style={[styles.keyboardButtonText, { color: theme.colors.text }]}>
+                    {t('remote.keyboard')}
+                  </Text>
+                </View>
+                {!hasPremiumAccess && (
+                  <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
+                    <Text style={styles.premiumBadgeText}>PRO</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </View>
+          );
+          
+        default:
+          return null;
+      }
+    });
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={styles.deviceInfoBar}>
@@ -181,225 +447,11 @@ export default function RemoteControlScreen({ route, navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.remoteContent}>
-        {/* Power Button */}
-        <View style={styles.powerSection}>
-          <TouchableOpacity 
-            style={[styles.powerButton, { backgroundColor: theme.colors.power }]}
-            onPress={handlePowerButton}
-          >
-            <Feather name="power" size={24} color={theme.colors.buttonText} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Volume Controls */}
-        <View style={styles.controlSection}>
-          <View style={styles.volumeControls}>
-            <RemoteButton 
-              icon="volume-x" 
-              label={t('remote.mute')}
-              onPress={() => handleVolumeButton('mute')}
-              theme={theme}
-              isActive={isMuted}
-            />
-            <RemoteButton 
-              icon="volume-1" 
-              label={t('remote.volumeDown')}
-              onPress={() => handleVolumeButton('down')}
-              theme={theme}
-            />
-            <RemoteButton 
-              icon="volume-2" 
-              label={t('remote.volumeUp')}
-              onPress={() => handleVolumeButton('up')}
-              theme={theme}
-            />
-          </View>
-        </View>
-
-        {/* Directional Pad */}
-        <View style={styles.dPadSection}>
-          <View style={styles.dPadRow}>
-            <View style={styles.dPadPlaceholder} />
-            <TouchableOpacity 
-              style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => handleDirectionalPad('up')}
-            >
-              <Feather name="chevron-up" size={30} color={theme.colors.buttonText} />
-            </TouchableOpacity>
-            <View style={styles.dPadPlaceholder} />
-          </View>
-          
-          <View style={styles.dPadRow}>
-            <TouchableOpacity 
-              style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => handleDirectionalPad('left')}
-            >
-              <Feather name="chevron-left" size={30} color={theme.colors.buttonText} />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.dPadCenterButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => handleDirectionalPad('ok')}
-            >
-              <Text style={[styles.dPadCenterText, { color: theme.colors.buttonText }]}>OK</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => handleDirectionalPad('right')}
-            >
-              <Feather name="chevron-right" size={30} color={theme.colors.buttonText} />
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.dPadRow}>
-            <View style={styles.dPadPlaceholder} />
-            <TouchableOpacity 
-              style={[styles.dPadButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => handleDirectionalPad('down')}
-            >
-              <Feather name="chevron-down" size={30} color={theme.colors.buttonText} />
-            </TouchableOpacity>
-            <View style={styles.dPadPlaceholder} />
-          </View>
-        </View>
-
-        {/* Channel Controls */}
-        <View style={styles.controlSection}>
-          <View style={styles.channelControls}>
-            <RemoteButton 
-              icon="chevrons-down" 
-              label={t('remote.channelDown')}
-              onPress={() => handleChannelButton('down')}
-              theme={theme}
-            />
-            <RemoteButton 
-              icon="list" 
-              label={t('remote.guide')}
-              onPress={() => handleChannelButton('guide')}
-              theme={theme}
-            />
-            <RemoteButton 
-              icon="chevrons-up" 
-              label={t('remote.channelUp')}
-              onPress={() => handleChannelButton('up')}
-              theme={theme}
-            />
-          </View>
-        </View>
-
-        {/* Numeric Keypad Toggle */}
-        <TouchableOpacity 
-          style={[
-            styles.keypadButton, 
-            { 
-              backgroundColor: showKeypad ? theme.colors.primary : theme.colors.card,
-              borderColor: theme.colors.border
-            }
-          ]}
-          onPress={() => setShowKeypad(!showKeypad)}
-        >
-          <Feather 
-            name="hash" 
-            size={20} 
-            color={showKeypad ? theme.colors.buttonText : theme.colors.text} 
-          />
-          <Text 
-            style={[
-              styles.keypadButtonText, 
-              { 
-                color: showKeypad ? theme.colors.buttonText : theme.colors.text 
-              }
-            ]}
-          >
-            {t('remote.numpad')}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Numeric Keypad (conditionally rendered) */}
-        {showKeypad && (
-          <View style={styles.keypadSection}>
-            <NumericKeypad onPress={handleKeypadNumber} theme={theme} />
-          </View>
-        )}
-
-        {/* App Shortcuts */}
-        <View style={styles.shortcutsSection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-            {t('remote.shortcuts')}
-          </Text>
-          <View style={styles.shortcutsGrid}>
-            <AppShortcutButton 
-              name="Netflix" 
-              icon="play" 
-              color="#E50914"
-              onPress={() => handlePremiumFeature('app-netflix')}
-              theme={theme}
-              isPremium={!hasPremiumAccess}
-            />
-            <AppShortcutButton 
-              name="YouTube" 
-              icon="youtube" 
-              color="#FF0000"
-              onPress={() => handlePremiumFeature('app-youtube')}
-              theme={theme}
-              isPremium={!hasPremiumAccess}
-            />
-            <AppShortcutButton 
-              name="Prime" 
-              icon="video" 
-              color="#00A8E1"
-              onPress={() => handlePremiumFeature('app-prime')}
-              theme={theme}
-              isPremium={!hasPremiumAccess}
-            />
-            <AppShortcutButton 
-              name={t('remote.more')} 
-              icon="grid" 
-              color="#747474"
-              onPress={() => handlePremiumFeature('app-more')}
-              theme={theme}
-              isPremium={!hasPremiumAccess}
-            />
-          </View>
-        </View>
-
-        {/* Premium Features */}
-        <View style={styles.premiumSection}>
-          <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
-            {t('remote.premiumFeatures')}
-          </Text>
-          <View style={styles.premiumButtons}>
-            <VoiceControlButton 
-              onPress={() => handlePremiumFeature('voice')}
-              device={device}
-              theme={theme}
-              isPremium={!hasPremiumAccess}
-              hasPremiumAccess={hasPremiumAccess}
-            />
-            <TouchableOpacity 
-              style={[
-                styles.keyboardButton, 
-                { 
-                  backgroundColor: theme.colors.card,
-                  borderColor: theme.colors.border 
-                }
-              ]}
-              onPress={() => handlePremiumFeature('keyboard')}
-            >
-              <View style={styles.keyboardButtonContent}>
-                <Feather name="type" size={24} color={theme.colors.text} />
-                <Text style={[styles.keyboardButtonText, { color: theme.colors.text }]}>
-                  {t('remote.keyboard')}
-                </Text>
-              </View>
-              {!hasPremiumAccess && (
-                <View style={[styles.premiumBadge, { backgroundColor: theme.colors.premium }]}>
-                  <Text style={styles.premiumBadgeText}>PRO</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+        {renderControlSections()}
       </ScrollView>
+      
+      {/* One-tap Layout Customization Button */}
+      <OneClickLayoutButton />
 
       {/* Premium Feature Prompt Modal */}
       <Modal

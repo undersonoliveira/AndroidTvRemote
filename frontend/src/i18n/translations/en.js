@@ -58,7 +58,24 @@ export default {
     shortcuts: 'App Shortcuts',
     premiumFeatures: 'Premium Features',
     more: 'More Apps',
-    commandFailed: 'Failed to send command to TV. Please try again.'
+    commandFailed: 'Failed to send command to TV. Please try again.',
+    
+    // Layout customization
+    customize: 'Customize Layout',
+    editLayout: 'Edit Layout',
+    saveLayout: 'Save Layout',
+    resetLayout: 'Reset to Default',
+    selectLayout: 'Select Layout',
+    layoutTip: 'Long press to edit, tap to select',
+    favoriteControls: 'Favorite Controls',
+    buttonVisibility: 'Button Visibility',
+    dragToReorder: 'Drag to reorder',
+    basicLayout: 'Basic',
+    fullLayout: 'Complete',
+    compactLayout: 'Compact',
+    mediaLayout: 'Media',
+    gamingLayout: 'Gaming',
+    customLayout: 'Custom'
   },
   
   // Settings

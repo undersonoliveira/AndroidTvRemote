@@ -1,271 +1,215 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Storage key for layout preferences
-const LAYOUT_PREFS_KEY = '@wifi_remote:layout_preferences';
+import { STORAGE_KEYS } from '../utils/constants';
 
 // Predefined layouts
 export const LAYOUTS = {
-  STANDARD: 'standard',
-  COMPACT: 'compact', 
-  EXPANDED: 'expanded',
-  CUSTOM: 'custom',
+  basic: {
+    buttonOrder: ['power', 'volume', 'dpad', 'channels'],
+    buttonVisibility: {
+      power: true,
+      volume: true,
+      dpad: true,
+      channels: true,
+      keypad: false,
+      shortcuts: false,
+      voice: false,
+      keyboard: false
+    }
+  },
+  full: {
+    buttonOrder: ['power', 'volume', 'dpad', 'channels', 'keypad', 'shortcuts', 'voice', 'keyboard'],
+    buttonVisibility: {
+      power: true,
+      volume: true,
+      dpad: true,
+      channels: true,
+      keypad: true,
+      shortcuts: true,
+      voice: true,
+      keyboard: true
+    }
+  },
+  compact: {
+    buttonOrder: ['power', 'volume', 'dpad'],
+    buttonVisibility: {
+      power: true,
+      volume: true,
+      dpad: true,
+      channels: false,
+      keypad: false,
+      shortcuts: false,
+      voice: false,
+      keyboard: false
+    }
+  },
+  media: {
+    buttonOrder: ['power', 'volume', 'dpad', 'shortcuts', 'voice'],
+    buttonVisibility: {
+      power: true,
+      volume: true,
+      dpad: true,
+      channels: false,
+      keypad: false,
+      shortcuts: true,
+      voice: true,
+      keyboard: false
+    }
+  },
+  gaming: {
+    buttonOrder: ['power', 'dpad', 'keyboard'],
+    buttonVisibility: {
+      power: true,
+      volume: false,
+      dpad: true,
+      channels: false,
+      keypad: false,
+      shortcuts: false,
+      voice: false,
+      keyboard: true
+    }
+  },
+  custom: {
+    buttonOrder: ['power', 'volume', 'dpad', 'channels', 'keypad', 'shortcuts', 'voice', 'keyboard'],
+    buttonVisibility: {
+      power: true,
+      volume: true,
+      dpad: true,
+      channels: true,
+      keypad: true,
+      shortcuts: true,
+      voice: true,
+      keyboard: true
+    }
+  }
 };
 
-// Default button visibility for each layout
-const defaultButtonVisibility = {
-  [LAYOUTS.STANDARD]: {
-    power: true,
-    volume: true,
-    channels: true,
-    dpad: true,
-    keypad: true,
-    shortcuts: true,
-    voice: true,
-    keyboard: true,
-  },
-  [LAYOUTS.COMPACT]: {
-    power: true,
-    volume: true,
-    channels: false,
-    dpad: true,
-    keypad: false,
-    shortcuts: true,
-    voice: false,
-    keyboard: false,
-  },
-  [LAYOUTS.EXPANDED]: {
-    power: true,
-    volume: true,
-    channels: true,
-    dpad: true,
-    keypad: true,
-    shortcuts: true,
-    voice: true,
-    keyboard: true,
-  },
-  [LAYOUTS.CUSTOM]: {
-    power: true,
-    volume: true,
-    channels: true,
-    dpad: true,
-    keypad: true,
-    shortcuts: true,
-    voice: true,
-    keyboard: true,
-  },
-};
-
-// Button order for each layout
-const defaultButtonOrder = {
-  [LAYOUTS.STANDARD]: [
-    'power',
-    'volume',
-    'dpad',
-    'channels',
-    'keypad',
-    'shortcuts',
-    'voice',
-    'keyboard',
-  ],
-  [LAYOUTS.COMPACT]: [
-    'power',
-    'volume',
-    'dpad',
-    'shortcuts',
-  ],
-  [LAYOUTS.EXPANDED]: [
-    'power',
-    'volume',
-    'dpad',
-    'channels',
-    'keypad',
-    'shortcuts',
-    'voice',
-    'keyboard',
-  ],
-  [LAYOUTS.CUSTOM]: [
-    'power',
-    'volume',
-    'dpad',
-    'channels',
-    'keypad',
-    'shortcuts',
-    'voice',
-    'keyboard',
-  ],
-};
-
-// Favorite buttons (highlighted)
-const defaultFavoriteButtons = {
-  [LAYOUTS.STANDARD]: ['power', 'volume', 'dpad'],
-  [LAYOUTS.COMPACT]: ['power', 'dpad'],
-  [LAYOUTS.EXPANDED]: ['power', 'volume', 'dpad', 'shortcuts'],
-  [LAYOUTS.CUSTOM]: ['power', 'volume', 'dpad'],
-};
-
+// Create context
 export const RemoteLayoutContext = createContext();
 
 export const RemoteLayoutProvider = ({ children }) => {
-  const [currentLayout, setCurrentLayout] = useState(LAYOUTS.STANDARD);
-  const [buttonVisibility, setButtonVisibility] = useState(defaultButtonVisibility[LAYOUTS.STANDARD]);
-  const [buttonOrder, setButtonOrder] = useState(defaultButtonOrder[LAYOUTS.STANDARD]);
-  const [favoriteButtons, setFavoriteButtons] = useState(defaultFavoriteButtons[LAYOUTS.STANDARD]);
+  // Default layout is 'full'
+  const [currentLayout, setCurrentLayout] = useState('full');
   const [isEditMode, setIsEditMode] = useState(false);
-
-  // Load saved preferences on component mount
+  const [buttonOrder, setButtonOrder] = useState(LAYOUTS.full.buttonOrder);
+  const [buttonVisibility, setButtonVisibility] = useState(LAYOUTS.full.buttonVisibility);
+  const [favoriteButtons, setFavoriteButtons] = useState([]);
+  const [customLayout, setCustomLayout] = useState(null);
+  
+  // Load saved layout on mount
   useEffect(() => {
-    loadLayoutPreferences();
+    loadSavedLayout();
   }, []);
-
-  // Load layout preferences from AsyncStorage
-  const loadLayoutPreferences = async () => {
-    try {
-      const savedPrefs = await AsyncStorage.getItem(LAYOUT_PREFS_KEY);
-      
-      if (savedPrefs) {
-        const prefs = JSON.parse(savedPrefs);
-        
-        setCurrentLayout(prefs.currentLayout || LAYOUTS.STANDARD);
-        setButtonVisibility(prefs.buttonVisibility || defaultButtonVisibility[LAYOUTS.STANDARD]);
-        setButtonOrder(prefs.buttonOrder || defaultButtonOrder[LAYOUTS.STANDARD]);
-        setFavoriteButtons(prefs.favoriteButtons || defaultFavoriteButtons[LAYOUTS.STANDARD]);
-      }
-    } catch (error) {
-      console.error('Error loading layout preferences:', error);
+  
+  // Save button order and visibility when they change
+  useEffect(() => {
+    if (currentLayout === 'custom') {
+      saveLayoutToStorage();
     }
-  };
-
-  // Save layout preferences to AsyncStorage
-  const saveLayoutPreferences = async () => {
-    try {
-      const prefsToSave = {
-        currentLayout,
-        buttonVisibility,
-        buttonOrder,
-        favoriteButtons,
-      };
-      
-      await AsyncStorage.setItem(LAYOUT_PREFS_KEY, JSON.stringify(prefsToSave));
-    } catch (error) {
-      console.error('Error saving layout preferences:', error);
+  }, [buttonOrder, buttonVisibility, favoriteButtons, currentLayout]);
+  
+  // Load layout when currentLayout changes
+  useEffect(() => {
+    if (currentLayout === 'custom' && customLayout) {
+      setButtonOrder(customLayout.buttonOrder);
+      setButtonVisibility(customLayout.buttonVisibility);
+    } else if (LAYOUTS[currentLayout]) {
+      setButtonOrder(LAYOUTS[currentLayout].buttonOrder);
+      setButtonVisibility(LAYOUTS[currentLayout].buttonVisibility);
     }
-  };
-
-  // Change to a predefined layout
-  const changeLayout = (layoutName) => {
-    if (Object.values(LAYOUTS).includes(layoutName)) {
-      setCurrentLayout(layoutName);
-      
-      if (layoutName !== LAYOUTS.CUSTOM) {
-        // Reset to default settings for the selected layout
-        setButtonVisibility(defaultButtonVisibility[layoutName]);
-        setButtonOrder(defaultButtonOrder[layoutName]);
-        setFavoriteButtons(defaultFavoriteButtons[layoutName]);
-      }
-      
-      // Save changes
-      saveLayoutPreferences();
-    }
-  };
-
-  // Toggle button visibility
-  const toggleButtonVisibility = (buttonId) => {
-    if (currentLayout !== LAYOUTS.CUSTOM) {
-      // Switch to custom layout if modifying a predefined layout
-      setCurrentLayout(LAYOUTS.CUSTOM);
-    }
-    
-    const updatedVisibility = {
-      ...buttonVisibility,
-      [buttonId]: !buttonVisibility[buttonId],
-    };
-    
-    setButtonVisibility(updatedVisibility);
-    saveLayoutPreferences();
-  };
-
-  // Toggle favorite button status
-  const toggleFavoriteButton = (buttonId) => {
-    if (currentLayout !== LAYOUTS.CUSTOM) {
-      // Switch to custom layout if modifying a predefined layout
-      setCurrentLayout(LAYOUTS.CUSTOM);
-    }
-    
-    let updatedFavorites;
-    
-    if (favoriteButtons.includes(buttonId)) {
-      // Remove from favorites
-      updatedFavorites = favoriteButtons.filter(id => id !== buttonId);
-    } else {
-      // Add to favorites
-      updatedFavorites = [...favoriteButtons, buttonId];
-    }
-    
-    setFavoriteButtons(updatedFavorites);
-    saveLayoutPreferences();
-  };
-
-  // Reorder buttons
-  const moveButton = (buttonId, direction) => {
-    if (currentLayout !== LAYOUTS.CUSTOM) {
-      // Switch to custom layout if modifying a predefined layout
-      setCurrentLayout(LAYOUTS.CUSTOM);
-    }
-    
-    const currentIndex = buttonOrder.indexOf(buttonId);
-    
-    if (currentIndex === -1) return; // Button not found
-    
-    let newIndex;
-    if (direction === 'up') {
-      newIndex = Math.max(0, currentIndex - 1);
-    } else if (direction === 'down') {
-      newIndex = Math.min(buttonOrder.length - 1, currentIndex + 1);
-    } else {
-      return; // Invalid direction
-    }
-    
-    // Don't proceed if already at the edge
-    if (newIndex === currentIndex) return;
-    
-    // Create a new array with the button moved
-    const updatedOrder = [...buttonOrder];
-    updatedOrder.splice(currentIndex, 1);
-    updatedOrder.splice(newIndex, 0, buttonId);
-    
-    setButtonOrder(updatedOrder);
-    saveLayoutPreferences();
-  };
-
+  }, [currentLayout, customLayout]);
+  
   // Toggle edit mode
   const toggleEditMode = () => {
-    setIsEditMode(!isEditMode);
+    setIsEditMode(prev => !prev);
   };
-
-  // Reset to default layout
+  
+  // Toggle a button as favorite
+  const toggleFavoriteButton = (buttonId) => {
+    setFavoriteButtons(prev => {
+      if (prev.includes(buttonId)) {
+        return prev.filter(id => id !== buttonId);
+      } else {
+        return [...prev, buttonId];
+      }
+    });
+  };
+  
+  // Load saved layout from AsyncStorage
+  const loadSavedLayout = async () => {
+    try {
+      const savedLayout = await AsyncStorage.getItem(STORAGE_KEYS.LAYOUT);
+      const savedFavorites = await AsyncStorage.getItem(STORAGE_KEYS.FAVORITES);
+      const savedCurrentLayout = await AsyncStorage.getItem(STORAGE_KEYS.CURRENT_LAYOUT);
+      
+      if (savedLayout) {
+        const parsedLayout = JSON.parse(savedLayout);
+        setCustomLayout(parsedLayout);
+      }
+      
+      if (savedFavorites) {
+        const parsedFavorites = JSON.parse(savedFavorites);
+        setFavoriteButtons(parsedFavorites);
+      }
+      
+      if (savedCurrentLayout) {
+        setCurrentLayout(savedCurrentLayout);
+      }
+    } catch (error) {
+      console.error('Error loading saved layout:', error);
+    }
+  };
+  
+  // Save current layout to AsyncStorage
+  const saveLayoutToStorage = async () => {
+    try {
+      const layoutToSave = {
+        buttonOrder,
+        buttonVisibility
+      };
+      
+      await AsyncStorage.setItem(STORAGE_KEYS.LAYOUT, JSON.stringify(layoutToSave));
+      await AsyncStorage.setItem(STORAGE_KEYS.FAVORITES, JSON.stringify(favoriteButtons));
+      await AsyncStorage.setItem(STORAGE_KEYS.CURRENT_LAYOUT, currentLayout);
+    } catch (error) {
+      console.error('Error saving layout:', error);
+    }
+  };
+  
+  // Save current layout as custom
+  const saveCustomLayout = () => {
+    const newCustomLayout = {
+      buttonOrder,
+      buttonVisibility
+    };
+    
+    setCustomLayout(newCustomLayout);
+    setCurrentLayout('custom');
+  };
+  
+  // Reset layout to default
   const resetToDefault = () => {
-    setCurrentLayout(LAYOUTS.STANDARD);
-    setButtonVisibility(defaultButtonVisibility[LAYOUTS.STANDARD]);
-    setButtonOrder(defaultButtonOrder[LAYOUTS.STANDARD]);
-    setFavoriteButtons(defaultFavoriteButtons[LAYOUTS.STANDARD]);
-    saveLayoutPreferences();
+    setButtonOrder(LAYOUTS.full.buttonOrder);
+    setButtonVisibility(LAYOUTS.full.buttonVisibility);
+    setFavoriteButtons([]);
   };
-
+  
   return (
     <RemoteLayoutContext.Provider
       value={{
         currentLayout,
-        buttonVisibility,
-        buttonOrder,
-        favoriteButtons,
+        setCurrentLayout,
         isEditMode,
-        changeLayout,
-        toggleButtonVisibility,
-        toggleFavoriteButton,
-        moveButton,
         toggleEditMode,
+        buttonOrder,
+        setButtonOrder,
+        buttonVisibility,
+        setButtonVisibility,
+        favoriteButtons,
+        toggleFavoriteButton,
+        availableLayouts: Object.keys(LAYOUTS),
         resetToDefault,
+        saveCustomLayout
       }}
     >
       {children}
