@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wi-Fi Remote Control - Interface Demo</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+    }
+    
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    h1 {
+      margin-bottom: 10px;
+      color: #BB86FC;
+    }
+    
+    .preview-section {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    
+    .preview-card {
+      background-color: #1e1e1e;
+      border-radius: 12px;
+      padding: 20px;
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    
+    .preview-card h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #03DAC6;
+      font-size: 1.5rem;
+    }
+    
+    .phone-frame {
+      border: 10px solid #333;
+      border-radius: 30px;
+      margin: 0 auto;
+      width: 280px;
+      height: 550px;
+      background-color: #121212;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background-color: #121212;
+      border-radius: 15px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    /* Device Discovery Screen Styles */
+    .devices-list {
+      padding: 15px;
+    }
+    
+    .device-item {
+      background-color: #2d2d2d;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .device-icon {
+      font-size: 24px;
+      margin-right: 15px;
+    }
+    
+    .device-info {
+      flex: 1;
+    }
+    
+    .device-info h3 {
+      margin-bottom: 5px;
+    }
+    
+    .device-info p {
+      color: #888;
+      font-size: 14px;
+    }
+    
+    .device-status {
+      background-color: #6200ee;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .scan-button {
+      background-color: #6200ee;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      display: block;
+      margin: 20px auto;
+      width: 80%;
+    }
+    
+    /* Remote Control Screen Styles */
+    .remote-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .power-button {
+      width: 60px;
+      height: 60px;
+      background-color: #cf000f;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-weight: bold;
+      margin: 20px auto;
+      display: block;
+      font-size: 12px;
+    }
+    
+    .volume-controls, .channel-controls {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 20px;
+      margin-bottom: 20px;
+    }
+    
+    .remote-button {
+      background-color: #333;
+      border: none;
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      min-width: 60px;
+      text-align: center;
+      font-size: 12px;
+    }
+    
+    .dpad {
+      width: 180px;
+      height: 180px;
+      position: relative;
+      margin: 30px auto;
+    }
+    
+    .dpad-button {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: #6200ee;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .dpad-up { top: 0; left: 50%; transform: translateX(-50%); }
+    .dpad-right { top: 50%; right: 0; transform: translateY(-50%); }
+    .dpad-down { bottom: 0; left: 50%; transform: translateX(-50%); }
+    .dpad-left { top: 50%; left: 0; transform: translateY(-50%); }
+    .dpad-center { 
+      top: 50%; 
+      left: 50%; 
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+    }
+    
+    .premium-features {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 15px;
+      margin-top: 20px;
+    }
+    
+    .premium-button {
+      background-color: #4caf50;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      flex: 1;
+      margin: 0 5px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    
+    .keyboard-button {
+      background-color: #2196f3;
+    }
+    
+    .layout-button {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: #2d2d2d;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    /* Features Section Styles */
+    .features-section {
+      margin: 40px 0;
+    }
+    
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    
+    .feature-card {
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .feature-card h3 {
+      margin-bottom: 10px;
+      color: #03DAC6;
+    }
+    
+    .icon {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      color: #BB86FC;
+    }
+    
+    footer {
+      text-align: center;
+      padding: 30px 0;
+      margin-top: 50px;
+      color: #888;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Wi-Fi Remote Control</h1>
+      <p>Visualização da Interface do Aplicativo</p>
+    </header>
+    
+    <div class="preview-section">
+      <div class="preview-card">
+        <h2>Tela de Descoberta de Dispositivos</h2>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div style="padding: 15px 15px 0;">
+              <h2 style="text-align: center; margin-bottom: 10px;">Encontre sua TV</h2>
+              <p style="text-align: center; color: #888; margin-bottom: 20px;">Selecione dispositivos disponíveis na sua rede</p>
+              <button class="scan-button">Buscar TVs</button>
+            </div>
+            
+            <div class="devices-list">
+              <div class="device-item">
+                <div class="device-icon">📺</div>
+                <div class="device-info">
+                  <h3>TV da Sala</h3>
+                  <p>Android TV XZ-1000</p>
+                  <p style="font-family: monospace; font-size: 12px;">192.168.1.100</p>
+                </div>
+                <div class="device-status">Pareado</div>
+              </div>
+              
+              <div class="device-item">
+                <div class="device-icon">📺</div>
+                <div class="device-info">
+                  <h3>TV do Quarto</h3>
+                  <p>Smart Screen 4K</p>
+                  <p style="font-family: monospace; font-size: 12px;">192.168.1.101</p>
+                </div>
+                <div class="device-status" style="background-color: #2196f3;">Conectar</div>
+              </div>
+              
+              <div class="device-item">
+                <div class="device-icon">📺</div>
+                <div class="device-info">
+                  <h3>TV da Cozinha</h3>
+                  <p>Mini Android Display</p>
+                  <p style="font-family: monospace; font-size: 12px;">192.168.1.102</p>
+                </div>
+                <div class="device-status" style="background-color: #2196f3;">Conectar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="preview-card">
+        <h2>Tela de Controle Remoto</h2>
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="remote-header">
+              <h3>TV da Sala</h3>
+              <button style="background: none; border: none; color: #888; font-size: 14px;">Desconectar</button>
+            </div>
+            
+            <button class="power-button">Power</button>
+            
+            <div class="volume-controls">
+              <button class="remote-button">Mute</button>
+              <button class="remote-button">Vol -</button>
+              <button class="remote-button">Vol +</button>
+            </div>
+            
+            <div class="dpad">
+              <button class="dpad-button dpad-up">▲</button>
+              <button class="dpad-button dpad-right">▶</button>
+              <button class="dpad-button dpad-down">▼</button>
+              <button class="dpad-button dpad-left">◀</button>
+              <button class="dpad-button dpad-center">OK</button>
+            </div>
+            
+            <div class="channel-controls">
+              <button class="remote-button">Ch -</button>
+              <button class="remote-button">Guide</button>
+              <button class="remote-button">Ch +</button>
+            </div>
+            
+            <div style="text-align: center; margin: 20px 0;">
+              <button style="background-color: #2d2d2d; border: none; color: white; padding: 10px 20px; border-radius: 20px;">
+                Teclado Numérico
+              </button>
+            </div>
+            
+            <div style="padding: 0 15px;">
+              <h3 style="margin-bottom: 10px;">Atalhos de Apps</h3>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                <button style="background-color: #E50914; color: white; border: none; padding: 10px; border-radius: 8px;">Netflix</button>
+                <button style="background-color: #FF0000; color: white; border: none; padding: 10px; border-radius: 8px;">YouTube</button>
+                <button style="background-color: #00A8E1; color: white; border: none; padding: 10px; border-radius: 8px;">Prime</button>
+                <button style="background-color: #0063e5; color: white; border: none; padding: 10px; border-radius: 8px;">Disney+</button>
+                <button style="background-color: #1DB954; color: white; border: none; padding: 10px; border-radius: 8px;">Spotify</button>
+                <button style="background-color: #5822b4; color: white; border: none; padding: 10px; border-radius: 8px;">HBO Max</button>
+              </div>
+            </div>
+            
+            <div class="premium-features">
+              <button class="premium-button">Controle por Voz</button>
+              <button class="premium-button keyboard-button">Entrada de Texto</button>
+            </div>
+            
+            <button class="layout-button">⊞</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="features-section">
+      <h2 style="text-align: center; margin-bottom: 30px; color: #BB86FC;">Principais Funcionalidades</h2>
+      
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="icon">🔍</div>
+          <h3>Descoberta Automática</h3>
+          <p>Encontre e conecte-se automaticamente às TVs Android na sua rede local, sem necessidade de configurações manuais.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="icon">🎮</div>
+          <h3>Controle Completo</h3>
+          <p>Controle volume, canais, navegação, entrada de texto e todas as funções do seu televisor Android.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="icon">🎭</div>
+          <h3>Temas Claro/Escuro</h3>
+          <p>Alterne entre os temas claro e escuro para adaptar a interface às suas preferências visuais.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="icon">🔊</div>
+          <h3>Controle por Voz</h3>
+          <p>Use comandos de voz para controlar sua TV com funções avançadas de reconhecimento de fala (recurso premium).</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="icon">📱</div>
+          <h3>Layouts Personalizáveis</h3>
+          <p>Personalize a interface do controle remoto com o recurso "One-click layout" para adaptar aos seus hábitos de uso.</p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="icon">🌐</div>
+          <h3>Multilíngue</h3>
+          <p>Suporte para 8 idiomas: Inglês, Português, Espanhol, Francês, Alemão, Russo, Chinês e Japonês.</p>
+        </div>
+      </div>
+    </div>
+    
+    <footer>
+      <p>Wi-Fi Remote Control para Android TV - Protótipo de Interface</p>
+      <p>&copy; 2025 - Todos os direitos reservados</p>
+    </footer>
+  </div>
+</body>
+</html>
