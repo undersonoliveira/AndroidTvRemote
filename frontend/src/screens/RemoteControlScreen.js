@@ -38,7 +38,6 @@ export default function RemoteControlScreen({ route, navigation }) {
   const { device } = route.params;
   const { t } = useTranslation();
   const { theme } = useContext(ThemeContext);
-  const { buttonVisibility, buttonOrder, favoriteButtons, isEditMode } = useContext(RemoteLayoutContext);
   
   const [isMuted, setIsMuted] = useState(false);
   const [showKeypad, setShowKeypad] = useState(false);
