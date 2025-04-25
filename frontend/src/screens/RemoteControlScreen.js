@@ -18,6 +18,7 @@ import RemoteButton from '../components/RemoteButton';
 import NumericKeypad from '../components/NumericKeypad';
 import AppShortcutButton from '../components/AppShortcutButton';
 import VoiceControlButton from '../components/VoiceControlButton';
+import OneClickLayoutButton from '../components/OneClickLayoutButton';
 
 // Services
 import { 
@@ -31,6 +32,7 @@ import { checkPremiumAccess } from '../services/subscriptionManager';
 
 // Context
 import { ThemeContext } from '../context/ThemeContext';
+import { RemoteLayoutContext } from '../context/RemoteLayoutContext';
 
 export default function RemoteControlScreen({ route, navigation }) {
   const { device } = route.params;

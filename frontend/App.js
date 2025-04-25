@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { LanguageProvider } from './src/context/LanguageContext';
+import { RemoteLayoutProvider } from './src/context/RemoteLayoutContext';
 import { checkTrialStatus } from './src/services/subscriptionManager';
 import * as SplashScreen from 'expo-splash-screen';
 import './src/i18n';
@@ -38,8 +39,10 @@ export default function App() {
     <SafeAreaProvider>
       <LanguageProvider>
         <ThemeProvider>
-          <AppNavigator />
-          <StatusBar style="auto" />
+          <RemoteLayoutProvider>
+            <AppNavigator />
+            <StatusBar style="auto" />
+          </RemoteLayoutProvider>
         </ThemeProvider>
       </LanguageProvider>
     </SafeAreaProvider>
