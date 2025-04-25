@@ -2,45 +2,20 @@ import { Alert } from 'react-native';
 import axios from 'axios';
 import { API_URL } from '../utils/constants';
 
-// Mock TV devices for demonstration
-const mockDevices = [
-  {
-    id: '1',
-    name: 'Living Room TV',
-    model: 'Samsung Smart TV',
-    ip: '192.168.1.100',
-    status: 'online'
-  },
-  {
-    id: '2',
-    name: 'Bedroom TV',
-    model: 'LG Android TV',
-    ip: '192.168.1.101',
-    status: 'online'
-  },
-  {
-    id: '3',
-    name: 'Kitchen TV',
-    model: 'Sony Bravia',
-    ip: '192.168.1.102',
-    status: 'offline'
-  }
-];
-
 /**
  * Discover Android TVs on the local network
  * @returns {Promise<Array>} List of discovered TV devices
  */
 export const discoverDevices = async () => {
   try {
-    // In a real implementation, this would make an API call to the backend
-    // For demonstration, we're using mock data
+    // Make API call to backend to discover devices
+    const response = await axios.get(`${API_URL}/api/discovery`);
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Filter only online devices
-    return mockDevices.filter(device => device.status === 'online');
+    if (response.data.status === 'success') {
+      return response.data.data.devices;
+    } else {
+      throw new Error(response.data.message || 'Failed to discover devices');
+    }
   } catch (error) {
     console.error('Error discovering devices:', error);
     throw new Error('Failed to discover devices');
@@ -51,8 +26,13 @@ export const discoverDevices = async () => {
  * Stop the discovery process
  */
 export const stopDiscovery = async () => {
-  // In a real implementation, this would cancel any ongoing discovery
-  // No action needed for the mock implementation
+  try {
+    // Call backend to stop discovery
+    await axios.get(`${API_URL}/api/discovery/stop`);
+  } catch (error) {
+    console.error('Error stopping discovery:', error);
+    // Non-critical error, so we don't throw
+  }
 };
 
 /**
@@ -63,31 +43,22 @@ export const stopDiscovery = async () => {
  */
 export const pairWithDevice = async (deviceId, pin) => {
   try {
-    // In a real implementation, this would send the PIN to the backend for pairing
-    // For demonstration, we're using mock data
+    // Call backend to pair with device using PIN
+    const response = await axios.post(`${API_URL}/api/pairing/pin`, {
+      deviceId,
+      pin
+    });
     
-    // Simulating network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simple validation (in a real app, this would be done on the server)
-    if (pin !== '1234' && deviceId !== '1' && deviceId !== '2') {
-      throw new Error('Invalid PIN');
+    if (response.data.status === 'success') {
+      return response.data.data.device;
+    } else {
+      throw new Error(response.data.message || 'Failed to pair with device');
     }
-    
-    // Find the device
-    const device = mockDevices.find(d => d.id === deviceId);
-    if (!device) {
-      throw new Error('Device not found');
-    }
-    
-    // Return the paired device with some additional information
-    return {
-      ...device,
-      paired: true,
-      pairingTime: new Date().toISOString()
-    };
   } catch (error) {
     console.error('Error pairing with device:', error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || 'Failed to pair with device');
+    }
     throw new Error('Failed to pair with device');
   }
 };
@@ -98,12 +69,18 @@ export const pairWithDevice = async (deviceId, pin) => {
  */
 export const getPairedDevices = async () => {
   try {
-    // In a real implementation, this would get the list from local storage or backend
-    // For demonstration, we're returning an empty array
-    return [];
+    // Call backend to get paired devices
+    const response = await axios.get(`${API_URL}/api/discovery/paired`);
+    
+    if (response.data.status === 'success') {
+      return response.data.data.devices;
+    } else {
+      return [];
+    }
   } catch (error) {
     console.error('Error getting paired devices:', error);
-    throw new Error('Failed to get paired devices');
+    // Return empty array on error to avoid crashing
+    return [];
   }
 };
 
@@ -113,10 +90,17 @@ export const getPairedDevices = async () => {
  */
 export const unpairDevice = async (deviceId) => {
   try {
-    // In a real implementation, this would remove the device from local storage or backend
-    // No action needed for the mock implementation
+    // Call backend to unpair device
+    const response = await axios.delete(`${API_URL}/api/pairing/${deviceId}`);
+    
+    if (response.data.status !== 'success') {
+      throw new Error(response.data.message || 'Failed to unpair device');
+    }
   } catch (error) {
     console.error('Error unpairing device:', error);
+    if (error.response && error.response.data) {
+      throw new Error(error.response.data.message || 'Failed to unpair device');
+    }
     throw new Error('Failed to unpair device');
   }
 };
